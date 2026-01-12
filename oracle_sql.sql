@@ -503,5 +503,423 @@ select upper(first_name) from employees;
 
 select initcap(email) from employees;
 
-
 select initcap('ESTO ES UNA PRUEBA') from dual;
+
+select * from employees
+where upper(first_name)  = 'DAVID';
+
+
+-- CONCAT Y ANIDAMIENTOS
+
+-- el  || no es estandar, perooooooooooo el concat solo recibe dos parametros 
+select first_name || ' ' || last_name  from employees;
+
+
+select  concat(first_name, last_name)  from employees;
+
+
+
+-- Esto no lo permite
+select  concat(first_name, ' ', last_name)  from employees;
+
+-- En ese caso se deberia anidar
+select  concat(first_name, concat (' ' ,last_name))  from employees;
+
+-- LENGTH, cantidad de caracteres
+
+
+select first_name , length(first_name) from employees;
+
+
+select * from employees
+where length(first_name) = 6;
+
+
+-- SUBSTR, extrae parte de una cadena
+--(cadena, posicion, longitud)
+--(cadena, posicion)
+
+select first_name , substr(first_name,1,3) from employees;
+
+select first_name , substr(first_name,3) from employees;
+
+
+select first_name , substr(first_name,length(first_name),1) from employees;
+
+-- INSTR, devuelve la posicion que ocupa la cadena dentro de otra cadena
+
+
+-- encuentra en que posicion esta la a
+select first_name, instr(first_name,'a') from employees;
+
+-- Devuelve todos los que tienen  la letra a,, con la funcion lower
+select * from employees
+where instr(lower(first_name),'a')  <> 0;
+
+-- indicar desde donde se puede iniciar la busqueda
+select first_name, instr(first_name,'a',4) from employees;
+
+
+select * from employees
+where instr(lower(first_name),'a',4)  <> 0;
+
+
+
+-- cual concurrencia, si es kla segunda o primera aparcicion dela a
+select * from employees
+where instr(lower(first_name),'a',1,3)  <> 0;
+
+-- cpn el -1 .... se empieza la busqued de derecha a izquierda
+
+-- LPAD, RPAD
+
+-- rellena cadenas con otras cadenas
+
+select rpad(first_name,20,'*')   from employees;
+
+select lpad(first_name,20,'*')   from employees;
+
+
+-- REPLACE, LTRIM, RTRIM, TRIM
+
+-- REPLACE, reemplaza las cadenas
+--(cadena_original, cadena_sustituir)
+
+select first_name,replace(first_name,'a','*')   from employees;
+
+-- LTRIM, RTRIM, QUITAR CARACTERES 
+
+select 'HOLA         ' || 'PEREZ' from dual;
+
+select rtrim('HOLA         ') || ' ' ||  'PEREZ' from dual;
+
+
+select ltrim('           HOLA') || ' ' ||  'PEREZ' from dual;
+
+-- Si no se indica el caracter, se quitan lo espaciones en blanco
+select first_name, rtrim(first_name,'n')   from employees;
+
+
+select '     HOLA         ' || 'PEREZ' from dual;
+
+-- el trim quita lso espacios d ela dereche e izquierda
+select trim('     HOLA     SR.    ') || ' ' || 'PEREZ' from dual;
+
+
+-- ROUND, TRUNC, MOD, POWER
+
+
+-- ROUND
+--( CANTIDAD, NIVEL DE REDONDEO DECIMALES)
+
+
+select round(50.900,2) from dual;
+
+
+select round(50.900) from dual;
+
+select round(50.920909209,2) from dual;
+
+
+-- TRUNCA, truncar
+
+select trunc(50.920909209,2) from dual;
+
+-- la diferencia entre truncar y redondear, es que el truncar no decide si sube o baja como elredondear
+
+-- Aca redonde al 51
+select round(50.900) from dual;
+
+-- Aca quitar el dedimal como tal, queda en 50
+select trunc(50.900) from dual;
+
+-- MOD, l resto
+
+select mod(10,3) from dual;
+
+
+-- POWER, potencia
+
+select power(10,2) from dual;
+
+
+/*
+ Tambien hay estas funciones
+ 
+ SIGN
+ SIN
+ SINH
+ SQRT
+ TAN
+ TANH
+
+Perfecto 👍
+Estas funciones pertenecen al **grupo matemático** de **Oracle SQL / PL-SQL**.
+Te las explico **una por una**, con **qué hacen**, **ejemplos claros** y **cuándo se usan en la vida real**.
+
+---
+
+## 🔢 `SIGN`
+
+👉 Indica **el signo de un número**
+
+```sql
+SIGN(número)
+```
+
+### Resultado:
+
+* `-1` → número negativo
+* `0`  → cero
+* `1`  → número positivo
+
+### Ejemplo
+
+```sql
+SELECT SIGN(-10), SIGN(0), SIGN(25)
+FROM dual;
+```
+
+Resultado:
+
+```
+-1   0   1
+```
+
+📌 **Uso real**: validaciones, reglas de negocio, comparaciones.
+
+---
+
+## 📐 `SIN`
+
+👉 Calcula el **seno** de un ángulo
+⚠️ El ángulo debe estar en **radianes**, no en grados.
+
+```sql
+SIN(radianes)
+```
+
+### Ejemplo
+
+```sql
+SELECT SIN(0) FROM dual;
+```
+
+Resultado:
+
+```
+0
+```
+
+Si tienes grados:
+
+```sql
+SELECT SIN(30 * ACOS(-1) / 180) FROM dual;
+```
+
+📌 **Uso real**: cálculos científicos, ingeniería, gráficos.
+
+---
+
+## 📐 `SINH`
+
+👉 Calcula el **seno hiperbólico**
+
+```sql
+SINH(número)
+```
+
+### Ejemplo
+
+```sql
+SELECT SINH(1) FROM dual;
+```
+
+📌 **Uso real**: matemáticas avanzadas, física, estadística.
+
+---
+
+## 📏 `SQRT`
+
+👉 Calcula la **raíz cuadrada**
+
+```sql
+SQRT(número)
+```
+
+### Ejemplo
+
+```sql
+SELECT SQRT(25) FROM dual;
+```
+
+Resultado:
+
+```
+5
+```
+
+⚠️ Si el número es negativo → error.
+
+📌 **Uso real**: distancias, fórmulas, desviación estándar.
+
+---
+
+## 📐 `TAN`
+
+👉 Calcula la **tangente** de un ángulo
+⚠️ También usa **radianes**.
+
+```sql
+TAN(radianes)
+```
+
+### Ejemplo
+
+```sql
+SELECT TAN(0) FROM dual;
+```
+
+Resultado:
+
+```
+0
+```
+
+📌 **Uso real**: trigonometría, pendientes, cálculos técnicos.
+
+---
+
+## 📐 `TANH`
+
+👉 Calcula la **tangente hiperbólica**
+
+```sql
+TANH(número)
+```
+
+### Ejemplo
+
+```sql
+SELECT TANH(1) FROM dual;
+```
+
+📌 **Uso real**: matemáticas avanzadas, modelos científicos.
+
+---
+
+## 📊 Tabla resumen rápida
+
+| Función | Qué hace             | Tipo           |
+| ------- | -------------------- | -------------- |
+| `SIGN`  | Devuelve -1, 0 o 1   | Comparación    |
+| `SIN`   | Seno                 | Trigonométrica |
+| `SINH`  | Seno hiperbólico     | Hiperbólica    |
+| `SQRT`  | Raíz cuadrada        | Matemática     |
+| `TAN`   | Tangente             | Trigonométrica |
+| `TANH`  | Tangente hiperbólica | Hiperbólica    |
+
+---
+
+## 🧠 Detalles importantes (entrevista)
+
+* `SIN` y `TAN` usan **radianes**
+* `SINH` y `TANH` **no usan grados**
+* `SIGN` es muy común en validaciones
+* `SQRT` **no acepta negativos**
+
+---
+
+## 🎯 Resumen final
+
+✔ Todas son funciones matemáticas
+✔ Usadas en SQL y PL/SQL
+✔ Trigonométricas usan radianes
+✔ Hiperbólicas son más avanzadas
+
+---
+
+Si quieres, seguimos con:
+
+* Conversión **grados → radianes**
+* Ejercicios reales en Oracle
+* Diferencias con SQL Server
+* Preguntas típicas de entrevista
+
+Dime 👌
+
+
+*/
+
+
+
+-- FUNCIONES PARA FECHAS
+
+-- Fecha en la que el empleado ingreso a la empresa
+select first_name, hire_date from employees;
+
+
+-- El formato de la fecha, dependera de el formato que este configurado 
+
+-- Con el sysdate, podemos ver cual es el formato de la fecha
+select sysdate from dual;
+
+
+
+-- Aritmetica con fechas
+
+-- Sumar un numero
+
+select sysdate + 2  from dual;
+
+
+-- Restar un numero 
+
+select sysdate - 1  from dual;
+
+-- Restar fechas
+-- Calcular dias
+
+-- Cuantos dias lleva el empleado en la empresa
+select first_name, hire_date ,sysdate - hire_date  from employees;
+
+-- NUmero de semanas
+select first_name, hire_date ,(sysdate - hire_date) / 7  from employees;
+
+-- NUmero de años
+select first_name, hire_date ,(sysdate - hire_date) / 365 from employees;
+
+
+-- MONTHS_BETWEEN, NEXT_DAY, ADD_MONTS
+
+--MONTHS_BETWEEN, numero de meses entre dos fechas
+select first_name, hire_date , months_between(sysdate , hire_date)  from employees;
+
+
+--ADD_MONTS, añadir meses
+select sysdate , add_months(sysdate,3) from dual;
+
+--NEXT_DAY, nos va a decir que fecha es tal dia de la semana (HAY QUE COMPROBAR EL FORMATO DE IDIOMA DENTRO DE LA FECHA EN LA BASE DE DATOS)
+select sysdate , next_day(sysdate,'DOMINGO') from dual;
+
+-- COMO SABER EL IDIOMA
+SELECT value
+FROM nls_session_parameters
+WHERE parameter = 'NLS_DATE_LANGUAGE';
+
+--LAST_DAY, ROUND, TRUNC
+
+
+
+--LAST_DAY, devuelve el ultimo dia del mes
+select sysdate , last_day(sysdate) from dual;
+
+-- ROUND, redondea acorde a mes o año
+select sysdate , round(sysdate, 'MONTH') from dual;
+
+--TRUNC, como el trunca, coloca entonces el primer dia del mes 
+select sysdate , trunc(sysdate, 'MONTH') from dual;
+
+
+
+
