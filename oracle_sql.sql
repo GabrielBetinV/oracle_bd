@@ -922,4 +922,153 @@ select sysdate , trunc(sysdate, 'MONTH') from dual;
 
 
 
+-- CONVERSIONES
+
+-- IMPLICITAS
+
+--Oracle convierte los tipos de datos automáticamente, sin que tú lo pidas.
+
+-- EXPLICITAS
+
+-- Oracle convierte los tipos de datos automáticamente, sin que tú lo pidas.
+
+-- TO_CHAR
+-- TO_DATE
+-- TO_NUMBER
+
+
+-- Implicita
+select '10' + 10 from dual;
+select '10' || 10 from dual;
+
+select 'HOY ES: ' || sysdate from dual;
+
+
+-- TO_CHAR
+
+--to_char(date/number, 'formato')
+
+/*
+ yyyy Año 4 numeros
+ year año(ingles)
+ mm mes 2 digitos
+ month mes en texto
+ mon abreviatura del mes
+ dy abreviatura del dia
+ day dia en texto
+ dd numero del dia
+
+*/
+
+select sysdate, to_char(sysdate,'yyyy')from dual;
+select sysdate, to_char(sysdate,'month')from dual;
+select sysdate, to_char(sysdate,'year')from dual;
+select sysdate, to_char(sysdate,'day')from dual;
+
+/*
+
+AM PM MERIDIAN
+HH  FORMATO 12 HORAS
+HH24 FORMATO 24 HORAS
+MI MINUTO
+SS SEGUNDOS
+
+
+*/
+
+select sysdate, to_char(sysdate,'hh')from dual;
+select sysdate, to_char(sysdate,'hh24')from dual;
+select sysdate, to_char(sysdate,'mi')from dual;
+select sysdate, to_char(sysdate,'hh24:mi:ss')from dual;
+
+select sysdate, to_char(sysdate,'yyyy/mm/dd hh24:mi:ss')from dual;
+
+select sysdate, to_char(sysdate,'"Son las " hh24:mi:ss "del dia " yyyy/mm/dd ' )from dual;
+
+
+
+/*
+    9 numeros
+    o visualiza cero
+    $ dolar
+    L moneda actual
+    . punto decimal
+    , separador de miles
+
+*/
+
+select first_name,salary from employees;
+
+select first_name,salary, to_char(salary,'99999') from employees;
+
+select first_name,salary, to_char(salary,'00009') from employees;
+
+
+select first_name,salary, to_char(salary,'$00009') from employees;
+
+
+select first_name,salary, to_char(salary,'L00009') from employees;
+
+select first_name,salary, to_char(salary,'L00009.99') from employees;
+
+select first_name,salary, to_char(salary,'L00009.99') from employees;
+
+-- TO_DATE
+
+--to_date(string, formato)
+
+select to_date('10-01-09') from  dual;
+select to_date('10-01-1990') from  dual;
+select to_date('10-01-1990') from  dual;
+select to_date('01-JUN-90') from  dual;
+
+
+select to_date('12-22-90') from  dual;
+
+select to_date('12-22-90', 'mm-dd-yy') from  dual;
+select to_date('jun-22-90', 'mon-dd-yy') from  dual;
+
+-- Formato RR, derterminar en que centuria estamos (siglo)
+-- 0 al 40  es apartir del año 2000
+-- del 50 al 99 asume del siglo 1900
+
+-- por defecto trabaja con RR
+
+select to_date('10-01-89')from dual;
+
+-- coloca 1989 , por eso aplica el RR
+select to_char( to_date('10-01-89'),  'DD-MM-YYYY' )from dual;
+
+-- coloca 2039 , por eso aplica el RR
+select to_char( to_date('10-01-39'),  'DD-MM-YYYY' )from dual;
+
+-- Para que el 39 lo entienda de este siglo, se cooca el formado al to_date
+select to_char( to_date('10-01-89', 'DD-MM-YY'),  'DD-MM-YYYY' )from dual;
+
+select to_char( to_date('10-01-89', 'DD-MM-RR'),  'DD-MM-YYYY' )from dual;
+
+
+-- YY ---> Oracle toma el año tal cual, usando el siglo actual.
+-- RR ---> Oracle decide el siglo según una regla lógica alrededor del año actual.
+
+
+
+-- TO_NUMBER
+
+-- to_number(string, formato)
+
+
+select to_number( '1000' )from dual;
+
+select to_number( '1000.89' , '9999.99')from dual;
+
+
+select to_number( '$1000.89' , 'L9999.99')from dual;
+
+
+
+
+
+-- FUNCIONES SQL - NULOS
+
 
