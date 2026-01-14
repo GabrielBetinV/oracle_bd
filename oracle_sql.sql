@@ -1071,4 +1071,104 @@ select to_number( '$1000.89' , 'L9999.99')from dual;
 
 -- FUNCIONES SQL - NULOS
 
+-- nvl(expresion, valor)
+
+
+select nvl('Hola','Adios') from dual;
+
+-- Si es nulo, entonces retorna el valor adio
+select nvl(null,'Adios') from dual;
+
+select first_name, commission_pct from employees;
+
+
+select first_name, nvl(commission_pct,0) from employees;
+
+
+
+-- nvl2(expression, varlor1, valor2)
+-- Si la expresion no es null, devuelve el valor 1 , sino , devuekve el valor 2
+select first_name, salary, commission_pct, nvl2(commission_pct,salary * commission_pct,salary * 0.1) from employees;
+
+
+
+-- NULLIF
+-- comparar dos valores
+-- si los dos valores son iguales, devuelve null
+-- si son diferentes devuelve el primer valor
+
+select nullif(1,1) from dual;
+
+select nullif(1,10) from dual;
+
+select country_id, upper(substr(country_name, 1, 2)) from countries;
+
+select country_id, upper(substr(country_name, 1, 2)),  nullif(country_id,upper(substr(country_name, 1, 2))),
+nvl2( nullif(country_id,upper(substr(country_name, 1, 2))),'NO SON IGUALES', 'SON IGUALES')
+from countries;
+
+
+-- COALSESCE (V1,V2,V3, ...........)
+-- Hasta que encuentre un valor no nulo, lo devuelve
+
+
+select coalesce('valor1','valor2','valor3','','valor4') from dual;
+
+select coalesce('','','valor3','','valor4') from dual;
+
+
+select first_name, to_char(commission_pct), to_char(manager_id) from employees;
+
+
+select first_name,  coalesce( to_char(commission_pct),  to_char(manager_id), 'No tiene jefe ni comision') from employees;
+
+
+-- expresiones condicionales
+
+
+-- CASE
+/*
+ v1
+ case 10
+      20
+      etc
+
+*/
+
+
+select first_name, job_id from employees;
+
+
+select first_name, job_id,
+case job_id
+    when 'SH_CLERK' then 'TIPO 1'
+    when 'ST_MAN' then 'TIPO 2'
+    when 'ST_CLERK' then 'TIPO 3'
+    else 'Sin tipo'
+end
+from employees;
+
+
+-- case searched
+-- Es diferente al case normal, ya que coloca los valores a ,os que se van a comparar
+
+
+select first_name, salary,
+case 
+    when salary between 0 and 3000 then 'Ganas pocos'
+    when salary between 3001 and 5000 then 'Ganas MEdios'
+    when salary > 5001  then 'Ganas Bastantes'
+    else 'No ganas'
+end
+from employees;
+
+
+-- Decode(expression,valor1, resultado, valor2, resultado, valor3, resultado)
+select first_name, department_id,
+decode(department_id,50,'INFORMATICA',10, 'VENTAS','OTRO TRABAJO')
+from employees;
+
+
+
+
 
