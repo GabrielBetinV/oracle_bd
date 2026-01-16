@@ -1169,6 +1169,123 @@ decode(department_id,50,'INFORMATICA',10, 'VENTAS','OTRO TRABAJO')
 from employees;
 
 
+-- GRUPOS Y FUNCIONES DE GRUPOS
+
+-- La funcion de grupo retorna una sola fila
+-- las funciones simples varias filas
+
+-- funciones de grupo
+-- AVG, MAX, MIN
+
+-- AVG, MEDIA DE UN VALOR NUMERICO
+select avg(salary) from employees;
+
+-- Maximo
+select max(salary) from employees;
+
+
+
+-- Mimino
+
+
+select min(salary) from employees;
+
+select min(salary),max(salary) , avg(salary) from employees;
+
+-- no se puede mezclar funciones de grupos con no de grupos
+select first_name ,min(salary),max(salary) , avg(salary) from employees;
+
+
+select min(salary),max(salary) , avg(salary) from employees
+where department_id > 50;
+
+
+-- Se puede hacer con varios tipos de datos, max y min  
+select max(hire_Date) from employees;
+select min(hire_Date) from employees;
+
+-- avg no permite con valores que no sean numericos
+select avg(hire_Date) from employees;
+
+-- COUNT Y OTROS
+
+-- count, cuenta filas, cuenta todo pero no los nulos
+
+select count(first_name) from employees;
+
+
+--- Cuenta mas salarios que comisiones
+select count(salary),  count(commission_pct) from employees;
+
+
+select count(*) from employees;
+
+select count(*) from employees;
+
+select count(department_id) from employees
+where department_id = 50;
+
+-- Se puede incluir distintic dentro del count
+select count(distinct first_name) from employees;
+select count(distinct department_id) from employees;
+
+
+
+-- SUM Y OTRAS
+select sum(salary) as "Suma de salarios", count(*) as "Numero de empleado" from employees
+where department_id = 50;
+
+
+select sum(salary) as "Suma de salarios", sum(salary) * 12 as "Suma anual de salarios", count(*) as "Numero de empleado" from employees
+where department_id = 50;
+
+
+
+select max(salary) - min(salary) as "Diferencia entre el max y min" from employees
+where department_id = 50;
+
+
+
+-- GROUP BY
+
+-- Agrupa por departamento
+select department_id from employees
+group by department_id ;
+
+
+-- Cuantos empleados hay por departamento
+select department_id , count(*) from employees
+group by department_id 
+order by department_id;
+
+-- Se puede agrupar por varios campos
+select department_id ,job_id, count(*) from employees
+group by department_id ,job_id
+order by department_id;
+
+
+-- HAVING
+
+-- Es como decir, el where del group by, para 
+-- aplicar filtros
+
+-- Los filtros solo pueden ser, funciones de grupos
+
+select department_id ,job_id, count(*) from employees
+group by department_id ,job_id
+having count(job_id) > 10
+order by department_id;
+
+select department_id ,job_id, count(*) from employees
+group by department_id ,job_id
+having sum(salary) > 25000 and count(*) > 10
+order by department_id;
+
+
+-- JOINS  UNIONES
+
+
+
 
 
 
