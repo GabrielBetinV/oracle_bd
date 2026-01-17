@@ -1284,6 +1284,209 @@ order by department_id;
 
 -- JOINS  UNIONES
 
+--  Natural joins
+
+-- Sin indicar las columnas, orcale intenta
+-- buscar las columnas con nomre igual
+-- para asociarlas
+
+
+-- la columna que se supone une las dos tables
+-- no se puede indicar en el select de las columnas
+-- ya que el natural joins la muestra automaticamente
+
+select * 
+from  regions r natural join countries;
+
+
+select c.* 
+from countries c;
+
+select r.* 
+from regions r;
+
+
+-- Clausal using
+-- A diferencia de natural joins, se deben 
+-- colocar las columnas que las une
+
+-- con el using, si encuentra dos columnas iguales
+-- multiplcas las filas o muestra todo lo que las una
+
+select department_name, first_name
+from employees join departments d
+   using (department_id);
+
+
+
+-- Clausula on
+-- es similar al usgin con las sgtes diferencias
+--  se puede cambiar al igual, por cualquier otra condicion
+-- no es obligatorio que se llamen igual las columnas, ya que tienen el alias de la tabla
+-- se puede tener mas de una columna para unir 
+-- Se puede unir varias tablas
+
+select department_name, first_name
+from employees e join departments d
+   on (e.department_id = d.department_id);
+
+select department_name, first_name
+from employees e join departments d
+   on (e.department_id <> d.department_id);
+   
+
+select department_name, first_name, l.city
+from employees e 
+join departments d on (e.department_id <> d.department_id)
+join locations l on (d.location_id <> l.location_id);
+
+
+select department_name, first_name, l.city
+from employees e 
+join departments d on (e.department_id = d.department_id)
+join locations l on (d.location_id = l.location_id and l.location_id is not null);
+
+
+
+-- joins con where
+-- Tambien se puede unir por medio de where
+
+
+
+select department_name, first_name
+from employees e , departments d
+where e.department_id = d.department_id;
+
+
+select department_name, first_name, l.city
+from employees e , departments d, locations l
+where e.department_id = d.department_id
+and d.location_id = l.location_id;
+
+
+-- self-join
+-- cuando hay union de las misma tabla
+-- por ejemplo, el manager_id es foranea de la misma tabla
+-- porque hay un empleado que es jefe
+
+-- obtener el nombre del empleado y del jefe
+
+select trabajador.first_name, jefe.first_name
+from employees trabajador
+join employees jefe on trabajador.manager_id = jefe.employee_id;
+
+
+
+
+-- join sin igualdad, NON-EQUIJOINS
+-- utiliza otra comparacion que el signo igual
+
+
+-- Los departamentos que estan en la ciudad pero no en la localidad
+select department_name
+from departments d
+join locations l on d.location_id <> l.location_id
+and l.city = 'Seattle';
+
+
+
+select department_name
+from departments d
+join locations l on d.location_id = l.location_id
+and l.city = 'Seattle';
+
+
+-- Outer joins
+-- recuperan las filas que no cumplen la condicion
+-- pero quiero que salgan
+
+
+-- No salen todos los empleados
+-- porque hay un emepleado que no tiene departamento asignado
+select department_name, first_name
+from departments d
+join employees e on d.department_id = e.department_id;
+
+-- son r 
+
+-- left outer join
+-- right outer join
+-- full outer join
+
+-- el join solo, es inner join
+
+-- left join, right joins, full joins
+
+
+-- el left, tendra  en cuenta todo lo de la tabla izquierda
+-- es decir, departamentos que no tienen empleados
+select department_name, first_name
+from departments d
+left join employees e on d.department_id = e.department_id;
+
+-- el right, tendra  en cuenta todo lo de la tabla derecha
+-- es decir, empleados que no tienen departamentos
+select department_name, first_name
+from departments d
+right join employees e on d.department_id = e.department_id;
+
+
+-- el full, tendra  en cuenta todo lo de las dos tablas
+-- es decir, empleados que no tienen departamentos y los departamentos
+-- que no tienen empleados
+select department_name, first_name
+from departments d
+full join employees e on d.department_id = e.department_id;
+
+
+
+-- cross join
+-- son tablas cruzadas, producto carteciano 
+
+-- MUltiplica la cantidad de cada tabla
+select department_name, first_name
+from departments ,employees ;
+
+-- Es igual que hacer el cross join
+
+select department_name, first_name
+from departments 
+cross join employees ;
+
+
+
+-- Clausula with
+--  simplifica el uso de subconsltas complejas
+
+select department_id,department_name , sum(salary) as salario
+from employees 
+join departments using (department_id)
+group by department_id , department_name
+having sum(salary) > 20000;
+
+
+-- Con el with, podriamos simular una tabla temporal
+-- que almacenara la query y despues la consultamos
+with suma_salario as
+    (select department_id , sum(salary) as salario
+    from employees 
+    group by department_id)
+select * from suma_salario where  salario > 20000;
+
+
+with suma_salario as
+    (select department_id , sum(salary) as salario
+    from employees 
+    group by department_id)
+select department_id, department_name ,salario 
+from suma_salario 
+natural join  departments
+where  salario > 20000;
+
+
+
+
+
 
 
 
