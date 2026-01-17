@@ -1485,8 +1485,269 @@ where  salario > 20000;
 
 
 
+--SUBCONSULTAS
+
+select max(salary) from employees;
+
+select first_name, salary from employees
+where salary = 24000;
 
 
+-- Vamos a realizar la subconsulta
+select first_name, salary from employees
+where salary = (select max(salary) 
+                from employees);
+                
+    
+-- se pueden utilizar en el 
+-- where
+-- from
+-- having
+
+-- las subconsultas debe devoler una sola fila
+-- la subconsulta se ejecuta una sola vez y luego 
+-- se compara con el query principal
+
+-- Cuantos empleados trabajan en el departamento de douglas grant
+select first_name, department_id
+from employees
+where department_id = (select department_id
+                       from  employees
+                       where first_name = 'Douglas' and last_name = 'Grant' );
+                       
+                       
+
+-- Cuantos empleados ganan mas que el promedui
+select first_name, last_name, salary
+from employees
+where salary > (select avg(salary)
+                       from  employees);
+ 
+-- Que esten en el departamento 50                      
+select first_name, last_name, salary
+from employees
+where salary > (select avg(salary)
+                       from  employees)
+and department_id = 50;
+       
+       
+-- Subconsultas en el having
+
+-- vamos a consultar el promedio de salario 
+-- por departamento
+select department_id, round(avg(salary)) as promedio_departamento
+from employees
+group by department_id;
+
+
+-- Ahora, validamos cuales departamento ganan mas que el promedio de sueldo de la empresa
+select department_id, round(avg(salary)) promedio_departamento
+from employees
+group by department_id
+having avg(salary) > (select avg(salary) from employees);
+
+-- los departamentos que ganan menos
+select department_id, round(avg(salary)) promedio_departamento
+from employees
+group by department_id
+having avg(salary) < (select avg(salary) from employees);
+
+
+-- Subconsultas con multiples filas (IN)
+
+-- Ene ste caso si podremos utilizar subconsultas 
+-- que retornen  multiples  filas
+-- y se podran hacer con 
+
+-- ANY
+-- IN
+-- ALL
+
+
+-- IN
+
+-- Obtener cuales empleados tienen el salary igual
+-- al maximo de salario de cualquier departamento
+select first_name, salary, department_id 
+from employees
+where salary in (select  max(salary) from employees group by department_id);
+
+
+-- Ahora, si quieremos que este en la lista de los
+-- maximos por departamento, 
+
+-- POr eso se coloca mas de una columna en la
+-- subconsulta del in
+
+select first_name, salary, department_id 
+from employees
+where (department_id, salary) in (select department_id ,  max(salary) from employees group by department_id);
+
+-- Obtendremos los empleados que trabajan en los
+-- departamentos ubicado en una ciudad
+select first_name, department_id
+from employees 
+where (department_id) in ( select d.department_id
+                        from departments d
+                        join locations l on (d.location_id = l.location_id) and city = 'Seattle'  
+                        );
+
+
+-- ANY, cualquiera que esten en las opciones
+-- debe estar acompañado de > , < , = , <>
+
+-- Que empleado ganan mas que algunos de los empleados programadores
+select first_name, last_name, job_id, salary
+from employees
+where salary > any (select salary from employees where job_id = 'IT_PROG')
+and job_id <> 'IT_PROG';
+
+
+-- ALL, a diferecia del ANY, debe ser mayor que todos
+-- cumple todos
+
+select first_name, last_name, job_id, salary
+from employees
+where salary > all (select salary from employees where job_id = 'IT_PROG')
+and job_id <> 'IT_PROG';
+
+-- Subconsultas sincronizadas
+
+
+-- Asi es como lo veniamos haciendo
+-- Primero se ejecuta el subquery una vez, y luego se compara con el query principal
+select first_name, last_name, job_id, salary
+from employees
+where (department_id, salary) in ( select department_id, max(salary)
+                                  from employees
+                                  group by department_id);
+
+-- Sincronizadas 
+-- Conoceremos los empleados con el salario igual al mayor salario de su departamento
+
+
+-- En este caso, el subquery se eecuta por cada fila
+select emp.first_name, emp.last_name, emp.job_id, emp.salary
+from employees emp
+where (emp.department_id, emp.salary) in ( select s.department_id, max(s.salary)
+                                  from employees s
+                                  where s.department_id = emp.department_id
+                                  group by department_id);
+                                  
+                                  
+                                  
+-- EXISTS  ,  NOT EXISTS
+
+-- valida si retorna o no datos
+-- Retorna false o true
+
+-- Departamento donde no existen empleados
+select department_name 
+from departments dept
+where not exists ( select * from employees
+                    where department_id = dept.department_id
+                );
+
+
+-- Departamento donde si existen empleados
+select department_name 
+from departments dept
+where  exists ( select * from employees
+                    where department_id = dept.department_id
+                );
+
+
+/*en SQL profesional:
+
+EXISTS (select 1 ...) → estándar
+
+EXISTS (select *) → se considera poco elegante*/
+
+select department_name 
+from departments dept
+where  exists ( select 1 from employees
+                    where department_id = dept.department_id
+                );
+
+
+
+-- OPERADORES DE CONJUNTO
+
+-- Tambien conocidos como set operator
+
+-- UNION
+-- Une las tablas y elimina los duplicados
+
+
+-- UNION ALL
+-- Une las tablas y devuelve los duplicados
+
+
+
+
+-- INTERSECT
+-- Une las tablas, y devuelve los datos que son comunes en las dos tablas
+
+
+-- MINUS
+-- Une las tablas, pero retorna A - B, 
+-- muestra todos los que estan en la tabla A menos lo de las tablas B
+
+
+/*
+CREATE TABLE REGIONS1
+(
+ REGION_ID NUMBER,
+ REGION_NAME VARCHAR2(25)
+ );
+ 
+ INSERT INTO REGIONS1 VALUES (1,'Europe');
+ INSERT INTO REGIONS1 VALUES (3,'Asia');
+ INSERT INTO REGIONS1 VALUES (6,'Australia');
+ INSERT INTO REGIONS1 VALUES (8,'Antartica');
+ 
+ commit;*/
+ 
+ 
+ -- Los tipos de las columnas sean iguales, no tiene que ser el mismo nombre como tal
+ 
+ 
+ 
+ -- UNION
+ -- Muestras los datos y elimina los duplicados
+ SELECT REGION_ID,REGION_NAME FROM REGIONS
+ UNION
+ SELECT REGION_ID,REGION_NAME FROM REGIONS1;
+ 
+ 
+ -- UNION ALL
+ -- Muestras los datos y muestra los duplicados 
+ 
+ SELECT REGION_ID,REGION_NAME FROM REGIONS
+ UNION ALL
+ SELECT REGION_ID,REGION_NAME FROM REGIONS1;
+ 
+ 
+  
+ -- INTERSECT
+ -- Muestras los datos y muestra los que coinciden
+ 
+ SELECT REGION_ID,REGION_NAME FROM REGIONS
+ INTERSECT
+ SELECT REGION_ID,REGION_NAME FROM REGIONS1;
+ 
+ 
+   
+ -- MINUS
+-- Muestras los datos y quita lo que esta en la segunda tabla
+ 
+  SELECT REGION_ID,REGION_NAME FROM REGIONS
+ MINUS
+ SELECT REGION_ID,REGION_NAME FROM REGIONS1;
+
+SELECT REGION_ID,REGION_NAME FROM REGIONS1
+ MINUS
+ SELECT REGION_ID,REGION_NAME FROM REGIONS;
 
 
 
