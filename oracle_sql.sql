@@ -1750,6 +1750,173 @@ SELECT REGION_ID,REGION_NAME FROM REGIONS1
  SELECT REGION_ID,REGION_NAME FROM REGIONS;
 
 
+-- DML Data Manipulation Lenguage
+
+-- Insert
+
+-- Permite guardar datos
+
+-- insert into table (c1,c2) values (v1,v2);
+
+insert into regions (region_id, region_name) 
+values (5,'PRUEBA1');
+
+select * from regions;
+
+-- Se puede omitir el nombre de  las columnas
+-- si se colocan los valores en el mismo  orden
+insert into regions values (6,'PRUEBA1');
+
+
+-- Es importante realizar el commit, de lo contrario los demas usuarios, no 
+-- podran ver los nuevos datos
+
+commit;
+-- indicando las columnas, se puede insertar en cualquier orden
+
+-- Insert multiples
+
+CREATE TABLE DEPT2
+(CODIGO NUMBER,
+NOMBRE VARCHAR2(100),
+JEFE NUMBER
+);
+
+INSERT INTO DEPT2 VALUES (1,UPPER('informatica'),100); 
+
+
+-- Insertar multiples filas de otra tabla con el select
+INSERT INTO DEPT2 (CODIGO,NOMBRE,JEFE)
+                  SELECT DEPARTMENT_ID,DEPARTMENT_NAME,MANAGER_ID FROM DEPARTMENTS
+                  WHERE LOCATION_ID=1700;
+                  
+commit;
+
+select * from DEPT2;
+
+-- Update
+-- Modificar filas
+
+/*update table
+set columna = valor, columna2 = valor=2
+where condicion*/
+
+update dept2
+set jefe = 100
+where codigo = 120;
+commit;
+
+
+update dept2
+set jefe =200
+where jefe is null;
+commit;
+
+-- se puede colocar subconsultas
+update dept2
+set jefe = (select manager_id from departments where department_id= 30)
+where codigo = 100;
+commit;
+
+-- Delete
+
+/*
+delete from table
+where condicion
+*/
+
+-- es importante colocar la condicion en el delete y el update
+
+delete from dept2 where codigo = 1;
+commit;
+
+
+-- se puede colocar una subconsulta para eliminar
+
+delete from regions where region_id in (5,6,7);
+commit;
+
+
+delete from regions1 where region_id in (select region_id
+                                     from regions where region_id in (1,3));
+commit;
+
+select * from regions1;
+
+-- Truncate
+-- truncate tabla nomnbre de table
+
+-- A diferencia del delete, es que mientras no haya commit, se puede recuperar
+-- pero en el truncate, no lo puedes recuperar
+
+truncate table regions1;
+rollback;
+
+
+commit;
+
+
+-- Transacciones
+
+-- Commit
+-- se confirman las transacciones
+-- una transaccion comienza cuando se termina la anterior,
+-- no es como en otras base de datos que se debe indicar cuando inicia y cuando termina
+
+/*
+  insert ....... trnsaccion 1
+  
+  update ......... transaccion 2
+  
+  
+  delete .......
+
+*/
+
+-- Rollback
+-- se rechazan las transacciones
+-- Los datos desaperecen, y tiene la misma logica explicada commit
+
+-- Es importante tener en cuenta que los comandos DDL
+-- create table, , alter ........
+-- Tienen un commit por defecto
+-- Tambien los DCL
+
+
+-- Cuando hay un fall, oracle hace rollback automaticamente.
+
+-- Hay herramientas que tiene commit configurada, de forma automatica
+-- es importante valdarlo antes de trabajar
+
+-- Aunque no se haga commit, el usuario que esta transaccionando si podran ver los cambios
+-- el resto de usuario no lo ven, hasta que o se validen
+
+insert into regions1 (region_id, region_name) 
+values (5,'PRUEBA1');
+
+select * from regions1;
+commit;
+
+-- Savepoint
+-- HAce rollback parciales
+
+-- Hace rolllback hasta un punto en el tiempo
+
+-- savepoint A => Se coloca el punto para rollback 
+-- Insert, .......etc
+
+-- al colocar rollback to savepoint A, se hace el rollback de los
+-- salvados 
+
+
+
+
+-- Bloqueos
+-- Si realizo un update sobre un registro de la tabla y no hago commit
+-- si otro usuario va a realizar un update sobre ese registro
+-- se bloque a la base de datos
+
+
 
 
 
