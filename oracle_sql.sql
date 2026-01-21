@@ -1916,6 +1916,293 @@ commit;
 -- si otro usuario va a realizar un update sobre ese registro
 -- se bloque a la base de datos
 
+-- DDL Data Definition Lenguage
+
+/*
+
+create
+alter
+drop
+
+*/
+
+
+/*
+tablas --> datos
+indices --> rendimiento
+vistas  -->  select guardada
+inonimos  --> Alias de tablas
+...
+...
+*/
+
+
+-- Crear tablas
+/*
+create table nombre
+(
+    c1 tipo,
+    c2 tipo
+    c3 tipo
+)
+*/
+
+-- forma basica
+create table prueba
+(
+ codigo number,
+ nombre varchar2(100)
+);
+
+
+desc prueba;
+
+-- con default, 
+create table prueba1
+(
+ codigo number,
+ nombre varchar2(100) default 'TOMAS',
+ fecha_entrada date default sysdate
+);
+
+desc prueba1;
+
+select * from prueba1;
+
+-- al realizar el insert solo con el codigo,  guardara el valor por defecto
+insert into prueba1(codigo) values (1);
+commit;
+
+
+-- constraints
+
+-- restricciones
+/*
+
+not null
+unique
+primary key
+foreign key
+check
+
+
+*/
+
+-- Primary key - not null
+-- LLaves primaria y columnas no nulas
+
+-- LAs llaves primarias no permiten escribir valores repetidos en las tablas
+-- y los not null, no permite realizar el insert si el campo nombre no tiene valor
+
+
+create table prueba3
+(
+  codigo number primary key,
+  nombre varchar2(100) not null
+);
+
+-- esto generaria error
+insert into prueba3(codigo) values (1);
+commit;
+
+
+insert into prueba3(codigo, nombre) values (1,'TOMAS');
+commit;
+
+select * from prueba3;
+
+-- llaves primarias compuestas (mas de una columna)
+create table prueba4
+(
+  codigo1 number,
+  codigo2 number,
+  nombre varchar2(100) not null,
+  primary key (codigo1,codigo2)
+);
+
+insert into prueba4(codigo1, codigo2, nombre) values (1,1,'TOMAS');
+commit;
+
+select * from prueba4;
+
+-- esto no lo permite
+insert into prueba4(codigo1, codigo2, nombre) values (1,1,'TOMAS');
+commit;
+
+
+insert into prueba4(codigo1, codigo2, nombre) values (1,2,'TOMAS');
+commit;
+
+
+
+-- constrains UNIQUE
+-- a diferencia de la primary key, es que puede ser null
+
+
+
+create table prueba5
+(
+  codigo number primary key,
+  nombre varchar2(100) unique
+);
+
+
+
+select * from prueba5;
+
+insert into prueba5(codigo, nombre) values (1,'TOMAS');
+commit;
+
+
+-- esto si lo permite, aunque el valor sea nulo
+insert into prueba5(codigo, nombre) values (2,null);
+commit;
+
+-- tambien se puede coloca al final, y se puede nombrar las constraint
+
+create table prueba6
+(
+  codigo number primary key,
+  nombre varchar2(100),
+  constraint nombre_i unique (nombre)
+);
+
+
+
+-- constrains FOREIGN KEY
+-- claves ajenas
+-- tablas maestros detalle
+
+-- relacion 1 ...... n
+
+-- tabla maestra
+
+create table cursos
+(
+     codigo number primary key,
+     nombre varchar2(100) not null
+);
+
+-- tabla detalle  (reference) es la llave foranea
+create table alumnos
+(
+     cod_alumno number primary key,
+     nombre varchar2(100) not null,
+     apellidos varchar2(100) not null,
+     cod_curso number references cursos(codigo)
+);
+
+insert into cursos values (1, 'web');
+commit;
+
+insert into alumnos values (1, 'Gabriel','Betin',1);
+commit;
+
+
+-- esto no se puede, porque no existe el curso 2
+insert into alumnos values (1, 'Gabriel','Betin',2);
+commit;
+
+
+-- tambien se puede colocar al final de la tabla
+
+create table alumnos1
+(
+     cod_alumno number primary key,
+     nombre varchar2(100) not null,
+     apellidos varchar2(100) not null,
+     cod_curso number,
+     constraint curso_alumno foreign key(cod_curso) references cursos(codigo)
+);
+
+-- cuando se coloca la constraint se coloca directamente en la coumna se llamda restriccion de columna
+-- si se coloca al final de la tabla, se llama restriccion de tabla
+
+
+-- constrains CHECK
+-- se utilizan para colocar condiciones en las tablas
+
+-- no se permitira grabar empleados con salarios que sean menor que 1000
+create table empleado
+(
+     codigo number primary key,
+     nombre varchar2(100) not null,
+     salario number check (salario > 1000)
+);
+
+-- Esto no se puede
+insert into empleado values(1, 'Alberto', 900);
+commit;
+
+
+insert into empleado values(1, 'Alberto', 10000);
+commit;
+
+select * from empleado;
+
+
+-- Otra idea, que no permita grabar si no es en mayusculca
+create table empleado1
+(
+     codigo number primary key,
+     nombre varchar2(100) not null check(nombre = upper(nombre)),
+     salario number check (salario > 1000)
+);
+
+
+-- Esto no se puede
+insert into empleado1 values(1, 'Alberto', 10000);
+commit;
+
+
+insert into empleado1 values(1, 'ALBERTO', 10000);
+commit;
+
+select * from empleado1;
+
+
+
+-- crear tablas de otras tablas
+
+-- se crea la tabla a partir de otra, y llna los datos
+-- hay un problema, no crear las constrains no null (primary key, foreing key, not null etc)
+create table empleados
+  as select * from employees;
+
+select * from empleados;
+
+-- tambien se pueden elegir las columnas a crear
+
+create table empleados2
+  as select first_name || ' ' || last_name as nombres, salary, salary * 12 neto
+  from employees;
+
+
+-- modificar tablas add y modify
+
+-- modificar tablas drop, read only
+
+-- borrar tablas drop table
+
+
+-- crear vistas
+
+
+-- inserts, updates y deletes sobre views
+
+-- crear indices
+
+-- crear secuencias
+
+-- crear sinonimos
+
+
+
+
+
+
+
+
 
 
 
