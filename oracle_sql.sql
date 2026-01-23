@@ -2178,25 +2178,294 @@ create table empleados2
   from employees;
 
 
+
 -- modificar tablas add y modify
+-- alter table
+
+/*
+    añadir columnas
+    modificar columnas
+    definir defaul value
+    borrar una columna
+    read  only
+
+*/
+
+
+-- añadir columnas
+
+alter table cursos
+add (profesor varchar2(100));
+
+
+-- para añadir una columna vacia, no se puede colocar not null
+-- Porque ya tiene filas
+
+
+-- Esto no se puede
+alter table cursos
+add (duracion number not null);
+
+
+
+-- modificar columnas (nombre, tipo , tamaño y valor por defecto)
+
+-- Se modifica el tamaño del varchar2
+alter table cursos
+modify (profesor varchar2(200)); 
+
+-- Se modifica el tipo de dato
+alter table cursos      
+modify (profesor number);
+
+
+-- Se puede cambiar el valor por defecto
+alter table cursos
+modify (profesor varchar2(200) default 'Sin profesor');
+
+-- agregar valor por defecto a una columna ya existente
+alter table cursos      
+modify (profesor varchar2(200) default 'Sin profesor');
+
 
 -- modificar tablas drop, read only
+
+-- Borrar las columnas
+
+alter table cursos  
+drop(profesor);
+
+
+-- Colocar  tabla como solo lectura,
+-- No permite inserts, updates ni deletes 
+alter table cursos read only;
+
+
+-- para permitir modificaciones
+alter table cursos read write;
 
 -- borrar tablas drop table
 
 
+drop table prueba;
+
+-- Si la llave primaria esta referenciada en otra tabla
+-- no se puede borrar la tabla
+
+-- Si se quiere borrar la tabla y todas las referencias
+-- se coloca cascade constraints
+-- Borra la tabla cursos y todas las referencias en otras tablas
+-- elimina las foreign key que la referencian   
+drop table cursos cascade constraints;
+
+
+
 -- crear vistas
+-- Son objetos que almacenan consultas select
+-- son como tablas virtuales
+-- guardan informacion
+
+
+create view vista_empleados as
+select * from employees;
+
+
+-- Consultar la vista
+-- realiza la consulta por debajo
+select * from vista_empleados;
+
+
+-- Una vista con condicion
+create view vista_empleados_50 as
+select * from employees
+where department_id = 50;
+
+
+-- consultar la vista, con cualquier condicion
+-- como si fuera el select original
+select * from vista_empleados_50
+where salary > 5000;
+
+select job_id, avg(salary) 
+from vista_empleados_50
+group by job_id
+having avg(salary) > 6000;  
+
+
+-- Crear vistas con algunas columnas
+create view vista_empleados_nombres as
+select first_name, last_name, salary from employees;
+
+-- Borrar vista
+drop view vista_empleados_nombres;
+
 
 
 -- inserts, updates y deletes sobre views
 
--- crear indices
+
+-- Las vistas estan basadas en tablas reales
+-- por lo tanto se pueden realizar operaciones DML
+-- sobre las vistas, y estas afectaran a las tablas reales
+
+
+CREATE VIEW REGIONS_V AS SELECT * FROM REGIONS;
+
+SELECT  * FROM REGIONS_V;
+
+INSERT INTO REGIONS_V VALUES(5,'XXX');
+
+SELECT * FROM REGIONS;
+
+INSERT INTO REGIONS_V (REGION_NAME) VALUES('ZZZ');
+
+UPDATE REGIONS_V SET REGION_NAME='TTTTT' WHERE REGION_NAME='XXX';
+
+CREATE VIEW REGIONES_PAISES AS SELECT * FROM REGIONS NATURAL JOIN COUNTRIES;
+DROP VIEW REGIONES_PAISES;
+
+SELECT * FROM REGIONES_PAISES;
+
+
+-- cuando las vistas son basadas en joins, no se pueden realizar
+-- inserts, updates o deletes, porque no sabe a que tabla   
+INSERT INTO REGIONES_PAISES VALUES(10,'REGION10','XX','PAIS FICTIOCIO');
+
+
+
+
+-- crear indices 
+-- Son estructuras que mejoran el rendimiento
+-- de las consultas select  
+-- Mejoran el rendimiento de las consultas
+-- especialmente en tablas grandes          
+
+create index idx_lastname on employees(last_name);
+
+
+-- Esto ayuda a mejorar el rendimiento de las consultas
+-- Sabiendo la estructura de datos , como administrador
+-- debo analizar cuales columnas son las mas consultadas
+
+
+-- No se  recomienda crear indices en tablas pequeñas
+-- porque el overhead de mantenimiento es mayor
+-- que la mejora en el rendimiento      
+
+-- ya que cada vez que se hace un insert, update o delete
+-- se debe actualizar el indice 
+ 
+-- como se actualizan los indices
+-- cada vez que se hace un insert, update o delete  
+-- ejemplo
+-- insert into employees values(........);
+-- se debe actualizar el indice idx_lastname    
+
+-- valor_indexado  →  ROWID (dirección física de la fila)
+-- curso_id = 10  →  fila #AAABkLAAEAAAAF3AAA
+-- Se actualiza el rowid de la fila insertada
+
+-- Al colocar los indices, se mejora el rendimiento de las consultas select
+-- al buscar por la columna indexada
+-- select * from employees where last_name = 'Smith';   
+-- No buscara en toda la tabla, sino que buscara en el indice
+-- valor_indexado  →  ROWID (dirección física de la fila)   
+
+-- Asi es mas rapido
+
+
+-- Borrar indice
+drop index idx_lastname;
 
 -- crear secuencias
+-- Recuperar un valor unico
+-- para llaves primarias
+
+-- Parecidos al campo numerico autoincrementables
+-- de otras bases de datos
+
+
+--create sequence sequence1 increment by 1 maxvalue 9999 minvalue 20 cache 20;
+
+-- Crear secuencia
+create sequence sequence1 increment by 1 maxvalue 9999 minvalue 20 cache 20;   
+
+
+-- Obtener el siguiente valor de la secuencia
+select sequence1.nextval from dual;
+
+
+-- Obtener el valor actual de la secuencia
+select sequence1.currval from dual;
+
+
+select * from regions1;
+
+insert into regions1 (region_id, region_name) 
+values (sequence1.nextval,'NUEVA REGION');  
+
+-- Eliminar secuencia
+drop sequence sequence1;
+
+-- Reiniciar secuencia
+-- No se puede reiniciar una secuencia  
+
+-- Modificar secuencia
+-- No se puede modificar una secuencia  
 
 -- crear sinonimos
 
+-- Son para crear alias a tablas, vistas, secuencias
+-- para simplificar el acceso a los objetos 
 
+-- crear sinonimo
+create synonym departamentos for departments;   
+
+-- consultar el sinonimo
+select * from departamentos;
+
+-- borrar sinonimo
+drop synonym departamentos;
+
+-- crear sinónimo con privilegios de otro usuario
+-- create synonym dept_usuario2 for usuario2.departments;   
+
+
+-- De esta manera, el usuario1 puede acceder a la tabla departments
+-- del usuario2 sin necesidad de colocar el nombre del usuario2 
+
+-- El query de abajo indica que el usuario plasticosta
+-- tiene un sinónimo publico llamado PK_WA_MRP y por lo tanto
+-- cualquier usuario puede acceder a la tabla plasticosta.PK_WA_MRP 
+
+
+--create or replace public synonym PK_WA_MRP    for plasticosta.PK_WA_MRP  ;
+
+-- comando para dar permisos a todos los usuarios
+-- sobre las tablas de otro usuario
+
+grant select on departments to prueba;
+
+-- de esta manera, el usuario prueba puede consultar la tabla departments
+select * from hr.departments;
+
+-- para no indicar el usuario hr, se puede crear un sinonimo
+create public synonym  departmentos for hr.departments;
+
+
+select * from departments;
+
+
+-- comando para quitar permisos a todos los usuarios
+revoke select on departments from prueba;
+
+
+-- Hay usuarios de base de datos que no tienen permisos para crear sinonimos
+-- en ese caso, se debe crear un sinonimo publico
+-- create or replace public synonym nombre_sinonimo for usuario.tabla;
+
+-- o, se le da el poder para crear sinonimos 
+-- grant create synonym to usuario;
 
 
 
