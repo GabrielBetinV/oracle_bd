@@ -2467,12 +2467,240 @@ revoke select on departments from prueba;
 -- o, se le da el poder para crear sinonimos 
 -- grant create synonym to usuario;
 
+-- Tablas en indices particionados
+--Son tablas que se dividen en segmentos fìsicos
+-- para mejorar el rendimiento y la gestión de grandes volúmenes de datos.  
+
+-- Hay de 3 tipos
+-- Rangos
+-- Listas
+-- Hash
+
+
+-- Tablas particionadas por rangos
+-- Se dividen los datos en rangos basados en valores de una columna específica.
+
+
+-- En esta  tabla, se particiona por rangos de codigo
+-- Los códigos menores a 100 van a la partición p1
+-- Los códigos entre 100 y 199 van a la partición p2  
+-- Los códigos 200 y superiores van a la partición p3
+
+
+create table Rango
+(
+  codigo number not null,
+  datos varchar2(100)
+)
+partition by range (codigo)
+(
+  partition p1 values less than (100),
+  partition p2 values less than (200),
+  partition p3 values less than (500)
+);
 
 
 
+-- Como saber las tablas particionadas
+select * from user_part_tables
+where table_name = 'RANGO'; 
+
+-- Como saber las particiones de una tabla
+select partition_name, high_value, tablespace_name
+from user_tab_partitions
+where table_name = 'RANGO'; 
 
 
 
+-- Insert y select en la tabla particionada por rangos
 
+-- Insertar datos en la tabla particionada por rangos
+insert into Rango (codigo, datos) values (50, 'Dato en partición p1');
+insert into Rango (codigo, datos) values (150, 'Dato en partición p 2');
+insert into Rango (codigo, datos) values (250, 'Dato en partición p 3');
+commit;
+
+
+-- Seleccionar datos de la tabla particionada
+select * from Rango;  
+
+-- Seleccionar por partición específica
+select * from Rango partition (p2);
+select * from Rango partition (p1);
+select * from Rango partition (p3);
+
+
+-- consultar con where
+select * from Rango
+where codigo = 21;
+
+
+-- con el boton de explain plan del sql developer
+-- se puede ver que particion se esta utilizando
+
+
+-- MAXVALUE
+
+-- Si intento insertar una fila que sobrepase
+-- el rango de la particion, no lo permitira
+insert into Rango (codigo, datos) values (669, 'Dato en partición p 3');
+commit;
+
+
+-- Para eso se agrega  el maxvalue en una particion
+
+alter table Rango
+add partition p4 values less than (maxvalue);
+
+insert into Rango (codigo, datos) values (669, 'Dato en partición p 3');
+commit;
+
+
+select * from Rango partition (p4);
+
+
+
+-- Modificar una fila particion
+
+select * from rango;
+
+-- En este caso lo actualiza sin problema porque esta en el mismo rango
+update rango set codigo = 51 where codigo = 50;
+commit;
+
+-- Pero en este caso genera error
+update rango set codigo = 200 where codigo = 51;
+commit;
+
+-- Para permitir que se pueda cambiar las particiones
+-- se debe activar esa funcionalidad en la tabla
+alter table rango enable row movement;
+
+-- Ahora si lo permite
+update rango set codigo = 200 where codigo = 51;
+commit;
+
+-- Pero esto afecta el rendimiento de la base de datos, no es recomendable
+
+
+-- Fusionar particiones
+
+
+select partition_name, high_value, tablespace_name
+from user_tab_partitions
+where table_name = 'RANGO'; 
+
+-- Puedo fusionar particiones adyacentes, que esta una detras del otro
+-- no puede haber nada en la mitada
+
+/*
+
+P1	100	USERS
+P2	200	USERS
+P3	500	USERS
+P4	MAXVALUE	USERS
+Se puede fusionar la p1 con la p2, la p2 con la p3, pero no la p1 con la pr
+*/
+
+-- Esto no se puede
+alter table rango merge partitions p1,p3 into partition p1_3;
+
+-- Este si es permitido
+alter table rango merge partitions p1,p2 into partition p1_2;
+
+-- Ahora ya no esta la p1 y l P2,  sino una que tiene la fusion
+-- toma el valor mayor
+
+/*
+
+P1_2	200	USERS
+P3	500	USERS
+P4	MAXVALUE	USERS
+
+*/
+
+-- Tambien se puede fusionar una hasta n.....
+-- pero debe estar adyacente
+alter table rango merge partitions p5 to p7 into partition p5_6_7;
+
+-- Tablas particionadas por listas
+-- son similares a las particiones por rangos
+-- pero en este caso se definen listas de valores específicos
+-- para cada partición.
+
+
+create table LISTA
+    (
+        codigo number not null,
+        pais varchar2(100),
+        cliente varchar2(100)
+    )
+    partition by list (pais)
+    (
+        partition europa values ('ESPAÑA','FRANCIA','ALEMANIA'),
+        partition latinoamerica values ('COLOMBIA','ARGENTINA','CHILE'),
+        partition asia values ('MALASIA','CHINA','INDONESIA')  
+    );
+    
+
+
+select *
+from user_tab_partitions
+where table_name = 'LISTA';
+
+-- Insertar
+insert into lista values (1,'FRANCIA', 'CLIENTE1' );
+COMMIT;
+
+insert into lista values (1,'COLOMBIA', 'CLIENTE1' );
+COMMIT;
+
+select * from lista partition (EUROPA);
+
+
+
+-- Añadir particiones a la listas, clausula default
+
+-- Esto no va a poder insertar, porque no esta en la lista
+insert into lista values (2,'USA', 'CLIENTE1' );
+commit;
+
+alter table lista add partition AMERICA_NORTE VALUES ('USA','CANADA');
+
+-- ahora si lo va a permitir
+insert into lista values (2,'USA', 'CLIENTE1' );
+commit;
+
+select * from lista partition (AMERICA_NORTE);
+
+-- Se puede crear una particion de tipo default, par que entren los demas
+-- que no estan en la lista
+
+alter table lista add partition OTROS VALUES (DEFAULT);
+
+insert into lista values (2,'NIGERIA', 'CLIENTE1' );
+commit;
+
+select * from lista partition (OTROS);
+
+-- Fusion de particiones a nivel de lista
+-- A diferencia de las de rangos, no es obligacion de que esten adyacentes
+
+select *
+from user_tab_partitions
+where table_name = 'LISTA';
+
+
+alter table lista merge partitions LATINOAMERICA, AMERICA_NORTE into partition america;
+
+select *
+from user_tab_partitions
+where table_name = 'LISTA';
+
+-- Tablas particionadas por has
+-- En este caso, las filas se distribuyen en particiones
+-- basadas en un valor hash calculado a partir de una o más columnas.
+-- Esto ayuda a distribuir uniformemente los datos
+-- y es útil para tablas con grandes volúmenes de datos.
 
 
