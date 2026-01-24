@@ -2704,3 +2704,269 @@ where table_name = 'LISTA';
 -- y es útil para tablas con grandes volúmenes de datos.
 
 
+-- no se necesita particionar por un valor cocreto
+-- no se identifica o coloca el value por el cual se va a paerticionar
+
+-- Se coloca el numero de partiticiones, para que la base de datos distribuya uniformemente
+create table tabla_hash
+(
+    codigo number not null,
+    datos varchar2(100)
+)
+partition by hash(codigo)
+partitions 3;
+
+
+select *
+from user_tab_partitions
+where table_name = 'TABLA_HASH';
+
+
+-- NO SE PUEDE HACER FUSIONES DE TABLAS HASH
+
+
+-- Borrar particiones
+
+-- Aca vemos cuales tables estan particionadas
+select *
+from user_part_tables;
+
+-- Aca bemos el detalle de las particiones 
+select *
+from user_tab_partitions;
+
+-- Ver una en particular
+select *
+from user_tab_partitions
+where table_name = 'RANGO';
+
+
+-- Borrar particion, ya no se  puede recuperar los datos
+-- OJO, si borra los datos
+alter table rango
+drop partition p4;
+
+select * from rango;
+
+-- Particiones compuestas, rango-hash
+
+-- Se combinan dos métodos de particionamiento
+-- Primero se particiona por rangos
+-- y luego cada partición de rango se subdivide en subparticiones
+-- utilizando un hash.  
+
+-- Ejemplo
+-- Primero se particiona por trimestres del año
+-- y luego cada trimestre se subdivide en 3 subparticiones
+-- basadas en el código del cliente.    
+
+
+
+create table rango_sub
+(
+    codigo number not null,
+    datos varchar2(100),
+    fecha date,
+    cod_cliente number
+)
+partition by range (fecha)
+    subpartition by hash(cod_cliente) subpartitions 3
+(
+    partition trimestre1 values less than (to_date('01-04-2023','dd-mm-yyyy')),
+    partition trimestre2 values less than (to_date('01-07-2023','dd-mm-yyyy')),
+    partition trimestre3 values less than (to_date('01-10-2023','dd-mm-yyyy')),
+    partition trimestre4 values less than (to_date('01-01-2024','dd-mm-yyyy'))
+);
+
+-- particiones
+select *
+from user_tab_partitions
+where table_name = 'RANGO_SUB';
+
+-- Subparticiones
+select *
+from user_tab_subpartitions
+where table_name = 'RANGO_SUB';
+
+
+-- Particiones compuestas, rango-lista
+-- Se combinan dos métodos de particionamiento
+-- Primero se particiona por rangos
+-- utilizando una lista de valores específicos.   
+
+
+create table rango_lista
+(
+    codigo number not null,
+    datos varchar2(100),
+    fecha date,
+    pais varchar2(50)
+)
+partition by range (fecha)
+    subpartition by list(pais)
+    (
+        partition trimestre1 values less than (to_date('01-04-2023','dd-mm-yyyy'))
+        (
+            subpartition T1_P1 values ('ESPAÑA','FRANCIA','ALEMANIA'),
+            subpartition T1_P2 values ('ARGENTINA','COLOMBIA','CHILE'),
+            subpartition T1_P3 values ('USA','CANADA','MEXICO'),
+            subpartition T1_P4 values (default)
+        ),
+        partition trimestre2 values less than (to_date('01-07-2023','dd-mm-yyyy'))  
+        (
+            subpartition T2_P1 values ('ESPAÑA','FRANCIA','ALEMANIA'),
+            subpartition T2_P2 values ('ARGENTINA','COLOMBIA','CHILE'),
+            subpartition T2_P3 values ('USA','CANADA','MEXICO'),
+            subpartition T2_P4 values (default)
+        ),
+        partition trimestre3 values less than (to_date('01-10-2023','dd-mm-yyyy'))
+        (
+            subpartition T3_P1 values ('ESPAÑA','FRANCIA','ALEMANIA'),
+            subpartition T3_P2 values ('ARGENTINA','COLOMBIA','CHILE'),
+            subpartition T3_P3 values ('USA','CANADA','MEXICO'),
+            subpartition T3_P4 values (default)
+        ),
+        partition trimestre4 values less than (to_date('01-01-2024','dd-mm-yyyy'))
+        (
+            subpartition T4_P1 values ('ESPAÑA','FRANCIA','ALEMANIA'),
+            subpartition T4_P2 values ('ARGENTINA','COLOMBIA','CHILE'),
+            subpartition T4_P3 values ('USA','CANADA','MEXICO   '),     
+            subpartition T4_P4 values (default)
+        )     
+    );      
+    
+    
+-- particiones
+select *
+from user_tab_partitions
+where table_name = UPPER('rango_lista');
+
+-- Subparticiones
+select *
+from user_tab_subpartitions
+where table_name = UPPER('rango_lista');
+    
+    
+-- inserts y update en subparticiones
+
+select sysdate - 830 from dual;
+
+insert into rango_lista values (1,'AAAA', sysdate - 830, 'USA');
+insert into rango_lista values (2,'BBBB', sysdate - 830, 'COLOMBIA');
+commit;
+
+select * from rango_lista;
+select * from rango_lista partition(trimestre4);
+select * from rango_lista subpartition(T2_P2);
+select * from rango_lista subpartition(T4_P3);
+select * from rango_lista subpartition(T4_P2);
+
+
+-- Indices particionados
+-- Son índices que se crean sobre tablas particionadas
+-- y se dividen en particiones que corresponden a las particiones
+-- de la tabla subyacente.  
+
+
+-- Hay dos tipos de índices particionados
+
+-- Locales: Cada partición del índice corresponde a una partición de la tabla.  
+--  La tabla esta particionada y cad particion tiene un indice
+-- Se utilizan para tipo data warehouse o inteligencia de negocio
+
+-- Globales: El índice se divide en particiones independientes  a la tabla
+-- Tengo una tabla que no quiero particionar, pero siquiero particionar el indice
+-- Se utilizan para aplicaciones de tipos transaccional (OLTP)
+      
+
+
+-- Tabla normal e índice particionado
+
+drop table t1;
+
+create table t1
+(codigo number,
+datos varchar2(50));
+
+-- Ejemplo 1 Global
+-- Global particionado
+-- La tabla no esta particionada, pero el indice si
+create index g1_t1 on t1 (codigo) global partition by hash(codigo) partitions 4;
+
+select * from user_ind_partitions where index_name='G1_T1';
+
+
+-- Ejemplo 2
+-- Tabla particionada e índice normal
+-- La tabla esta particionada, pero el indice no  
+
+
+drop table t2;
+create table t2
+(codigo number,
+datos varchar2(50))
+PARTITION BY RANGE (codigo)
+  (
+      PARTITION P1 VALUES LESS THAN (10),
+      PARTITION P2 VALUES LESS THAN (20),
+      PARTITION P3 VALUES LESS THAN (30),
+      PARTITION P4 VALUES LESS THAN (40)
+     );
+     
+     create index t2_i1 on t2(datos);
+     
+--  Ejemplo     
+-- Tabla particionada e índice global particionado
+-- La tabla no esta particionada por datos si no por codigo, pero el indice si esta particionado por datos
+
+drop table t3;
+create table t3
+(codigo number,
+datos varchar2(50))
+PARTITION BY RANGE (codigo)
+  (
+      PARTITION P1 VALUES LESS THAN (10),
+      PARTITION P2 VALUES LESS THAN (20),
+      PARTITION P3 VALUES LESS THAN (30),
+      PARTITION P4 VALUES LESS THAN (40)
+     );
+        
+     create index g1_t3 on t3 (datos) global partition by hash(datos) partitions 4;
+
+
+     
+-- indices particionados locales
+-- La tabla esta particionada y cad particion tiene un indice
+-- Se utilizan para tipo data warehouse o inteligencia de negocio 
+-- Ejemplo 2
+
+drop table t4;
+create table t4
+(codigo number,
+datos varchar2(50))
+PARTITION BY RANGE (codigo)
+  (
+      PARTITION P1 VALUES LESS THAN (10),
+      PARTITION P2 VALUES LESS THAN (20),
+      PARTITION P3 VALUES LESS THAN (30),
+      PARTITION P4 VALUES LESS THAN (40)
+     );
+     create index t4_i1 on t4(codigo) local ;
+     
+     
+     select * from user_ind_partitions where index_name='T4_I1';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
