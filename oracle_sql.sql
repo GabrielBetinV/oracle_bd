@@ -2957,6 +2957,101 @@ PARTITION BY RANGE (codigo)
      select * from user_ind_partitions where index_name='T4_I1';
 
 
+-- Clausalas SQL orientadas a DataWareHouse y trabajos masivos
+
+-- Vistas inline
+-- INLINE VIEWS
+
+-- Son vistas que se definen dentro de una consulta SQL
+-- No se crean como objetos separados en la base de datos
+-- Se utilizan para simplificar consultas complejas
+-- o para mejorar la legibilidad del código SQL   
+
+
+-- Esta es una vista normal
+CREATE VIEW VISTA_EMPLE AS SELECT * FROM EMPLOYEES ORDER BY SALARY DESC;
+
+SELECT * FROM VISTA_EMPLE WHERE SALARY > 5000;
+
+-- esta es una vista inline, 
+-- que se define dentro del select
+-- A diferencia de la vista normal
+-- que se crea como un objeto separado    
+-- La vista inline solo existe durante la ejecución de la consulta
+
+SELECT FIRST_NAME,SALARY 
+   FROM (SELECT * FROM EMPLOYEES ORDER BY SALARY DESC)
+WHERE SALARY > 5000;
+
+
+-- Crear una nueva tabla a partir de otra
+CREATE TABLE REGIONES1 AS SELECT * FROM REGIONS;
+
+SELECT * FROM REGIONES1;
+
+
+-- Crear vista de la nueva tabla
+CREATE VIEW VIEW_REGIONES AS SELECT * FROM REGIONES1;
+
+-- Se puede hacer insert en la vista, y esta afecta la original
+INSERT INTO VIEW_REGIONES VALUES(5,'ANTARTICA');
+commit;
+
+-- Para vista inline, tambien se puede realizar insert  y update
+-- Tambien afecta a la tabla original
+INSERT INTO (SELECT * FROM REGIONES1) VALUES(6,'AUSTRALIA');
+
+UPDATE (SELECT * FROM REGIONES1 WHERE REGION_ID> 3)  SET REGION_NAME=LOWER(REGION_NAME);
+
+
+-- Hay 4 formas para insertar de forma masiva
+-- Insert all => Sin condicion
+-- Insert all condicional
+-- Insert first =>  Primera condicion que se cumple
+--  pivoting Insert => Insertar datos en tablas pivoteadas  
+
+
+-- Insert all, insertar datos en multiples tablas al mismo tiempo, sin condicion
+
+
+DROP TABLE NOM_EMPLES;
+DROP TABLE SALARIOS;
+
+CREATE TABLE NOM_EMPLES (COD_EMPLE NUMBER, FIRST_NAME VARCHAR2(100));
+
+CREATE TABLE SALARIOS (COD_EMPLE NUMBER, SALARY NUMBER);
+
+-- Insert all sin condicion
+INSERT ALL
+   INTO NOM_EMPLES VALUES (EMPLOYEE_ID,FIRST_NAME)
+   INTO SALARIOS VALUES (EMPLOYEE_ID,SALARY)
+SELECT * FROM EMPLOYEES;
+
+SELECT * FROM NOM_EMPLES;
+SELECT * FROM SALARIOS;
+
+
+-- Insert all con valores fijos
+INSERT ALL
+   INTO NOM_EMPLES VALUES (1,'HOLA')
+   INTO SALARIOS VALUES (1,100)
+SELECT 1 FROM DUAL;
+
+-- Insert all condicional
+
+-- Insert First
+
+-- Operador with
+
+-- Operador Rollup
+
+-- Operador Grouping
+
+-- Grouping Set
+
+-- Pivot
+
+-- Unpivot
 
 
 
