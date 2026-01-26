@@ -3037,23 +3037,1001 @@ INSERT ALL
    INTO SALARIOS VALUES (1,100)
 SELECT 1 FROM DUAL;
 
+
+
 -- Insert all condicional
+
+ 
+
+--  Las filas se insertan en diferentes tablas
+
+--  dependiendo de las condiciones especificadas
+
+
+
+
+DROP TABLE EMPLES_JEFES;
+
+DROP TABLE EMPLES_MANDOS;
+
+DROP TABLE EMPLES_NORMALES;
+
+DROP TABLE FINANCIERO;
+
+ 
+
+-- Se crean las tablas destino
+
+-- Las tablas destino son EMPLES_JEFES, EMPLES_MANDOS, EMPLES_NORMALES y FINANCIERO
+
+-- Cada tabla tiene una estructura diferente
+
+CREATE TABLE EMPLES_JEFES (COD_EMPLE NUMBER, NOMBRE VARCHAR2(100), SALARIO NUMBER);
+
+CREATE TABLE EMPLES_MANDOS (COD_EMPLE NUMBER, NOMBRE VARCHAR2(100), SALARIO NUMBER,DEPARTAMENTO NUMBER);
+
+CREATE TABLE EMPLES_NORMALES (COD_EMPLE NUMBER, NOMBRE VARCHAR2(100), SALARIO NUMBER,RESPONSABLE NUMBER);
+
+ 
+
+-- Insert all condicional
+
+-- Dependiendo del salario y departamento
+
+-- Tambien se puede agregar un else al final
+
+-- para capturar los que no cumplen ninguna condicion
+
+ 
+
+INSERT ALL
+
+    WHEN SALARY > 10000 THEN
+
+        INTO EMPLES_JEFES VALUES(EMPLOYEE_ID, FIRST_NAME||' '||LAST_NAME, SALARY)
+
+     WHEN SALARY BETWEEN  8000 AND 10000 THEN
+
+        INTO EMPLES_MANDOS  VALUES(EMPLOYEE_ID, FIRST_NAME||' '||LAST_NAME, SALARY,DEPARTMENT_ID)    
+
+     WHEN SALARY < 8000 THEN
+
+        INTO EMPLES_NORMALES VALUES(EMPLOYEE_ID, FIRST_NAME||' '||LAST_NAME, SALARY, MANAGER_ID)
+
+    WHEN DEPARTMENT_ID=100 THEN
+
+        INTO FINANCIERO VALUES(EMPLOYEE_ID, FIRST_NAME||' '||LAST_NAME, SALARY, MANAGER_ID)
+
+SELECT * FROM EMPLOYEES;
+
+ 
+
+SELECT COUNT(*) FROM EMPLES_JEFES;
+
+SELECT COUNT(*) FROM EMPLES_MANDOS;
+
+SELECT COUNT(*) FROM EMPLES_NORMALES;
+
+ 
+
+CREATE TABLE FINANCIERO (COD_EMPLE NUMBER, NOMBRE VARCHAR2(100), SALARIO NUMBER,RESPONSABLE NUMBER);
+
+SELECT COUNT(*) FROM FINANCIERO;
+
+
+
 
 -- Insert First
 
+-- Similar al Insert All condicional
+
+-- Pero solo la primera condicion que se cumple
+
+-- es la que se ejecuta para cada fila  
+
+-- Las filas se insertan en la primera tabla
+
+-- cuya condicion se cumple
+
+-- si hay otra fila que cumple otra condicion
+
+-- no se insertara en la otra tabla
+
+ 
+
+TRUNCATE TABLE EMPLES_JEFES;
+
+TRUNCATE TABLE EMPLES_MANDOS;
+
+TRUNCATE TABLE EMPLES_NORMALES;
+
+TRUNCATE TABLE FINANCIERO;
+
+ 
+
+CREATE TABLE EMPLES_JEFES (COD_EMPLE NUMBER, NOMBRE VARCHAR2(100), SALARIO NUMBER);
+
+CREATE TABLE EMPLES_MANDOS (COD_EMPLE NUMBER, NOMBRE VARCHAR2(100), SALARIO NUMBER,DEPARTAMENTO NUMBER);
+
+CREATE TABLE EMPLES_NORMALES (COD_EMPLE NUMBER, NOMBRE VARCHAR2(100), SALARIO NUMBER,RESPONSABLE NUMBER);
+
+ 
+
+-- Insert First condicional
+
+-- Dependiendo del salario y departamento
+
+-- Solo la primera condicion que se cumple
+
+ 
+
+INSERT FIRST
+
+    WHEN DEPARTMENT_ID=100 THEN
+
+        INTO FINANCIERO VALUES(EMPLOYEE_ID, FIRST_NAME||' '||LAST_NAME, SALARY, MANAGER_ID)
+
+    WHEN SALARY > 10000 THEN
+
+        INTO EMPLES_JEFES VALUES(EMPLOYEE_ID, FIRST_NAME||' '||LAST_NAME, SALARY)
+
+     WHEN SALARY BETWEEN  8000 AND 10000 THEN
+
+        INTO EMPLES_MANDOS  VALUES(EMPLOYEE_ID, FIRST_NAME||' '||LAST_NAME, SALARY,DEPARTMENT_ID)    
+
+     WHEN SALARY < 8000 THEN
+
+        INTO EMPLES_NORMALES VALUES(EMPLOYEE_ID, FIRST_NAME||' '||LAST_NAME, SALARY, MANAGER_ID)
+
+   
+
+SELECT * FROM EMPLOYEES;
+
+ 
+
+-- A diferencia del Insert All condicional
+
+-- Ahora los conteos son diferentes
+
+-- porque solo se inserto en la primera condicion que se cumplia
+
+-- hay menos filas en las tablas
+
+ 
+
+-- es importante el orden de las condiciones
+
+-- porque solo la primera que se cumple es la que se ejecuta
+
+-- Es decir aunque una fila cumpla varias condiciones
+
+-- solo se insertara en la primera tabla cuya condicion se cumple
+
+
+
+
+SELECT COUNT(*) FROM EMPLES_JEFES;
+
+SELECT COUNT(*) FROM EMPLES_MANDOS;
+
+SELECT COUNT(*) FROM EMPLES_NORMALES;
+
+ 
+
+CREATE TABLE FINANCIERO (COD_EMPLE NUMBER, NOMBRE VARCHAR2(100), SALARIO NUMBER,RESPONSABLE NUMBER);
+
+SELECT COUNT(*) FROM FINANCIERO;
+
+
+
+
 -- Operador with
+
+-- Se utiliza para definir subconsultas
+
+-- que pueden ser referenciadas en la consulta principal  
+
+ 
+
+-- Solo se ejecuta una vez, aunque se utilice varias veces
+
+-- Mejora el rendimiento de las consultas complejas
+
+ 
+
+-- Se almacena en un tablespace temporal para utilizarla varias veces
+
+-- Mejora la legibilidad y el mantenimiento del código SQL  
+
+ 
+
+--CLAUSULA WITH
+
+--SUBQUERY FACTORING CLAUSE
+
+ 
+
+-- Es un CTE (Common Table Expression)
+
+-- Traducido como Expresión de Tabla Común
+
+-- Permite definir una o mas subconsultas
+
+-- que pueden ser referenciadas en la consulta principal
+
+
+
+
+-- Es similar a las vistas inline
+
+-- pero con la diferencia que la vista inline
+
+-- se define dentro del select
+
+-- y la clausula with se define antes del select principal  
+
+ 
+
+-- Este es un ejemplo sin la clausula with , utilizando una subconsulta
+
+-- para contar el numero de empleados por departamento,
+
+-- es un join entre la tabla employees y una subconsulta
+
+SELECT E.FIRST_NAME AS NOMBRE, DC.NUM_EMPLE AS NUMERO_EMPLEADOS,E.DEPARTMENT_ID
+
+FROM EMPLOYEES E,
+
+    (SELECT DEPARTMENT_ID, COUNT(*) AS NUM_EMPLE FROM EMPLOYEES GROUP BY DEPARTMENT_ID) DC
+
+WHERE E.DEPARTMENT_ID = DC.DEPARTMENT_ID;
+
+         
+
+SELECT DEPARTMENT_ID, COUNT(*) AS NUM_EMPLE FROM EMPLOYEES GROUP BY DEPARTMENT_ID;
+
+
+
+
+-- Ahora con la clausula WITH
+
+-- Se define la subconsulta antes del select principal  
+
+-- el join se hace con el nombre de la subconsulta
+
+-- que en este caso es VISTA_NUM_EMPLE
+
+ 
+
+WITH VISTA_NUM_EMPLE AS
+
+    ( SELECT DEPARTMENT_ID, COUNT(*) AS NUM_EMPLE FROM EMPLOYEES GROUP BY DEPARTMENT_ID)
+
+SELECT E.FIRST_NAME AS NOMBRE, DC.NUM_EMPLE AS NUMERO_EMPLEADOS,E.DEPARTMENT_ID
+
+FROM EMPLOYEES E, VISTA_NUM_EMPLE DC
+
+WHERE E.DEPARTMENT_ID = DC.DEPARTMENT_ID;  
+
+ 
+
+-- Ejemplo mas complejo
+
+-- Calcular el salario total por departamento
+
+-- y el numero de empleados por departamento
+
+-- y el numero total de empleados en la empresa
+
+ 
+
+WITH SUM_SALARIO AS (SELECT DEPARTMENT_ID,SUM(SALARY) AS SALARIO_DEPARTAMENTO FROM EMPLOYEES GROUP BY DEPARTMENT_ID),
+
+     NUM_EMPLE AS (SELECT DEPARTMENT_ID,COUNT(*) AS NUM_EMPLEADOS FROM EMPLOYEES GROUP BY DEPARTMENT_ID),
+
+     NUM_EMPLE_TOTAL AS (SELECT COUNT(*) AS TOTAL_EMPLEADOS FROM EMPLOYEES)
+
+SELECT DEPARTMENT_NAME, SALARIO_DEPARTAMENTO,NUM_EMPLEADOS,TOTAL_EMPLEADOS
+
+FROM
+
+DEPARTMENTS NATURAL JOIN SUM_SALARIO NATURAL JOIN NUM_EMPLE,NUM_EMPLE_TOTAL;
+
+
+
+
+
+-- Clausulas SQL orientadas a DataWareHouse y trabajos masivos
+
+-- rollup, cube, grouping, grouping set, pivot, unpivot
+
+ 
 
 -- Operador Rollup
 
+ 
+
+-- Se utiliza para generar subtotales y totales acumulados
+
+-- en consultas que agrupan datos
+
+-- Es una extension del GROUP BY
+
+-- Permite agrupar por multiples niveles de jerarquia
+
+ 
+
+-- Ejemplo sin rollup
+
+-- Agrupa por DEPARTMENT_ID
+
+-- y calcula la suma de SALARY por departamento
+
+SELECT DEPARTMENT_ID, SUM(SALARY) AS "SALARIO_TOTAL"
+
+FROM EMPLOYEES WHERE DEPARTMENT_ID IS NOT NULL
+
+GROUP BY (DEPARTMENT_ID)
+
+ORDER BY DEPARTMENT_ID;
+
+ 
+
+-- Ejemplo con rollup, aggrega una fila adicional
+
+-- que contiene el total general de todos los departamentos
+
+SELECT DEPARTMENT_ID, SUM(SALARY) AS "SALARIO_TOTAL"
+
+FROM EMPLOYEES WHERE DEPARTMENT_ID IS NOT NULL
+
+GROUP BY ROLLUP(DEPARTMENT_ID)
+
+ORDER BY DEPARTMENT_ID;
+
+
+
+
+-- Ejemplo con rollup
+
+-- Agrupa por DEPARTMENT_ID y JOB_ID  
+
+-- y calcula la suma de SALARY por departamento y por trabajo
+
+-- Ademas calcula el total por departamento
+
+-- y el total general de todos los departamentos y trabajos
+
+ 
+
+-- Es decir por cada departamento y trabajo, coloca una fila con la suma, como si fuera un subtotal
+
+SELECT DEPARTMENT_ID,JOB_ID,SUM(SALARY)
+
+FROM EMPLOYEES
+
+GROUP BY ROLLUP(DEPARTMENT_ID,JOB_ID)
+
+order by department_id,job_id;
+
+
+
+
+
+
+-- Operador cube
+
+-- Se utiliza para generar todas las combinaciones posibles
+
+-- de subtotales y totales en consultas que agrupan datos
+
+-- Es una extension del GROUP BY
+
+-- Permite agrupar por multiples dimensiones
+
+
+
+
+-- Ejemplo sin cube
+
+-- Agrupa por CITY y DEPARTMENT_NAME  
+
+SELECT CITY,DEPARTMENT_NAME,COUNT(*)
+
+FROM LOCATIONS NATURAL JOIN DEPARTMENTS  JOIN EMPLOYEES USING (DEPARTMENT_ID)
+
+GROUP BY CITY,DEPARTMENT_NAME
+
+ORDER BY CITY,DEPARTMENT_NAME;
+
+ 
+
+-- Ejemplo con cube
+
+-- Genera todas las combinaciones posibles
+
+-- de subtotales y totales para CITY y DEPARTMENT_NAME  
+
+ 
+
+-- Es decir, muestra el total por cada ciudad , por cada departamento
+
+-- por cada ciudad y departamento y el total general
+
+ 
+
+ 
+
+SELECT CITY,DEPARTMENT_NAME,COUNT(*) AS EMPLEADOS
+
+FROM LOCATIONS NATURAL JOIN DEPARTMENTS  JOIN EMPLOYEES USING (DEPARTMENT_ID)
+
+GROUP BY CUBE(CITY,DEPARTMENT_NAME)
+
+ORDER BY CITY,DEPARTMENT_NAME;
+
+ 
+
+--  Ejemplo con mas dimensiones, relaciona todo con todo
+
+SELECT CITY,DEPARTMENT_NAME,JOB_ID,COUNT(*) AS EMPLEADOS
+
+FROM LOCATIONS NATURAL JOIN DEPARTMENTS  JOIN EMPLOYEES USING (DEPARTMENT_ID)
+
+GROUP BY CUBE(CITY,DEPARTMENT_NAME,JOB_ID)
+
+ORDER BY CITY,DEPARTMENT_NAME,JOB_ID;
+
+ 
+
+-- ROLLUP y CUBE son extensiones de GROUP BY en SQL (muy usadas en Oracle Database) que sirven para generar totales y subtotales automáticamente.
+
+ 
+
+-- ROLLUP genera subtotales progresivos, siguiendo el orden de las columnas.
+
+ 
+
+/*
+
+ 
+
+Cuándo usar ROLLUP
+
+Reportes jerárquicos
+
+Totales por niveles
+
+Finanzas, ventas, contabilidad
+
+Estructuras tipo:
+
+Empresa → Planta → Línea → Producto
+
+ 
+
+*/
+
+ 
+
+-- CUBE genera TODAS las combinaciones de agrupación.
+
+--Si tienes N columnas, genera 2ⁿ combinaciones
+
+ 
+
+/*
+
+ 
+
+Cuándo usar CUBE
+
+ 
+
+Análisis exploratorio
+
+Dashboards BI
+
+Power BI / Tableau / Excel
+
+Cuando quieres ver los datos desde todos los ángulos
+
+ 
+
+*/
+
+ 
+
+/*
+
+ 
+
+Diferencia CLAVE (en una frase)
+
+ 
+
+ROLLUP sube por la jerarquía
+
+CUBE explota todas las combinaciones posibles
+
+ 
+
+*/
+
+ 
+
 -- Operador Grouping
+
+-- Se utiliza junto con ROLLUP o CUBE
+
+-- para identificar las filas que representan subtotales o totales generales  
+
+-- Permite diferenciar entre filas de datos normales
+
+-- y filas que representan agregaciones
+
+ 
+
+-- Ejemplo con rollup y grouping
+
+-- Agrupa por DEPARTMENT_ID y JOB_ID    
+
+ 
+
+-- Cuando aparece un NULL en DEPARTMENT_ID o JOB_ID
+
+-- significa que es un subtotal o total general
+
+-- Para identificar esas filas, se utiliza la funcion GROUPING
+
+-- que devuelve 1 si es un subtotal o total
+
+ 
+
+-- Si devuelve 1 es un subtotal o total
+
+-- Si devuelve 0 es un dato normal  
+
+ 
+
+SELECT DEPARTMENT_ID,JOB_ID,SUM(SALARY),GROUPING(DEPARTMENT_ID),GROUPING(JOB_ID)
+
+FROM EMPLOYEES
+
+GROUP BY ROLLUP(DEPARTMENT_ID,JOB_ID)
+
+order by department_id,job_id;
+
+
+
+
+-- Ejemplo con rollup, grouping y decode
+
+-- Agrupa por DEPARTMENT_ID y JOB_ID
+
+-- Utiliza DECODE para mostrar etiquetas claras
+
+-- en lugar de NULL para subtotales y totales generales
+
+SELECT DECODE(GROUPING(JOB_ID),1,'TOTAL DEPARTAMENTO:'||DEPARTMENT_ID,DEPARTMENT_ID) AS "DEPARTAMENTO",
+
+DECODE(GROUPING(DEPARTMENT_ID),1,'TOTAL:',job_id) AS "TRABAJO",
+
+SUM(SALARY) AS "TOTAL SALARIO"
+
+FROM EMPLOYEES
+
+WHERE DEPARTMENT_ID IS NOT NULL
+
+GROUP BY ROLLUP(DEPARTMENT_ID,JOB_ID)
+
+order by department_id,job_id;
+
+ 
 
 -- Grouping Set
 
+-- Conjunto de agrupaciones especificas
+
+-- Permite definir combinaciones específicas  
+
+-- de columnas para agrupar los datos
+
+-- en lugar de generar todas las combinaciones posibles como CUBE
+
+-- o los subtotales progresivos como ROLLUP
+
+-- Ofrece un control más preciso sobre las agregaciones generadas
+
+ 
+
+-- Crear grupos dentro de grupos, pero especificos  
+
+ 
+
+-- Ejemplo sin grouping set
+
+SELECT DEPARTMENT_ID,JOB_ID,SUM(SALARY)
+
+FROM EMPLOYEES
+
+WHERE DEPARTMENT_ID IS NOT NULL
+
+GROUP BY DEPARTMENT_ID,JOB_ID
+
+order by department_id;
+
+ 
+
+-- Ejemplo con grouping sets
+
+-- Agrupa por DEPARTMENT_ID solamente
+
+-- Genera subtotales solo por DEPARTMENT_ID
+
+ 
+
+SELECT DEPARTMENT_ID,SUM(SALARY)
+
+FROM EMPLOYEES
+
+WHERE DEPARTMENT_ID IS NOT NULL
+
+GROUP BY GROUPING SETS(DEPARTMENT_ID)
+
+order by department_id;
+
+ 
+
+-- En este ejemplo, se agrupa por DEPARTMENT_ID y JOB_ID
+
+-- y se generan subtotales para cada DEPARTMENT_ID
+
+-- Ademas del total general
+
+ 
+
+-- Muestra la suma de salario por departamento y luego, la suma por trabajo dentro de cada departamento
+
+SELECT DEPARTMENT_ID,JOB_ID,SUM(SALARY)
+
+FROM EMPLOYEES
+
+WHERE DEPARTMENT_ID IS NOT NULL
+
+GROUP BY GROUPING SETS(DEPARTMENT_ID,JOB_ID)
+
+order by department_id;
+
+ 
+
+-- El grouping set se diferencia del rollup en que
+
+-- el rollup genera subtotales progresivos  
+
+-- mientras que el grouping set permite definir combinaciones específicas
+
+ 
+
+-- Aca no hay grouping set, solo es una union de dos consultas
+
+-- Una por DEPARTMENT_ID y otra por JOB_ID
+
+-- Por eso es mejor usar grouping set
+
+SELECT NULL,DEPARTMENT_ID,SUM(SALARY) FROM EMPLOYEES GROUP BY DEPARTMENT_ID
+
+UNION ALL
+
+SELECT JOB_ID,NULL,SUM(SALARY) FROM EMPLOYEES GROUP BY JOB_ID;
+
+ 
+
+-- El gruoping set hace lo mismo que la union de las dos consultas
+
+-- pero en una sola consulta
+
+-- A diferencia de la union, el grouping set es mas eficiente
+
+-- porque solo se recorre la tabla una sola vez
+
+ 
+
+-- Ejemplo con grouping sets multiple
+
+-- Agrupa por DEPARTMENT_ID y JOB_ID
+
+-- y por DEPARTMENT_ID y MANAGER_ID
+
+-- Genera subtotales para cada combinacion especifica
+
+SELECT DEPARTMENT_ID,JOB_ID,MANAGER_ID,SUM(SALARY)
+
+FROM EMPLOYEES
+
+WHERE DEPARTMENT_ID IS NOT NULL
+
+GROUP BY GROUPING SETS((DEPARTMENT_ID,JOB_ID),(DEPARTMENT_ID,MANAGER_ID));
+
+
+
+
+
 -- Pivot
+
+-- Se utiliza para transformar filas en columnas
+
+-- Permite reorganizar y resumir datos  
+
+-- Facilita el análisis y la presentación de datos en un formato tabular más legible  
+
+ 
+
+DROP TABLE PIVOT;
+
+CREATE TABLE PIVOT (
+
+  CODIGO            NUMBER,
+
+  CLIENTE   NUMBER,
+
+  PRODUCTO  VARCHAR2(100),
+
+  CANTIDAD      NUMBER
+
+);
+
+ 
+
+INSERT INTO PIVOT VALUES (1, 1, 'AGUACATES', 10);
+
+INSERT INTO PIVOT VALUES (2, 1, 'BANANAS', 20);
+
+INSERT INTO PIVOT VALUES (3, 1, 'MANZANA', 30);
+
+INSERT INTO PIVOT VALUES (4, 2, 'AGUACATES', 40);
+
+INSERT INTO PIVOT VALUES (5, 2, 'MANZANA', 50);
+
+INSERT INTO PIVOT VALUES (6, 3, 'AGUACATES', 60);
+
+INSERT INTO PIVOT VALUES (7, 3, 'BANANAS', 70);
+
+INSERT INTO PIVOT VALUES (8, 3, 'MANZANA', 80);
+
+INSERT INTO PIVOT VALUES (9, 3, 'NARANJA', 90);
+
+INSERT INTO PIVOT VALUES (10, 4, 'AGUACATES', 100);
+
+COMMIT;
+
+ 
+
+SELECT * FROM PIVOT;
+
+ 
+
+-- El pivot se compone de tres partes
+
+-- La subconsulta que selecciona los datos originales
+
+-- La clausula PIVOT
+
+-- La funcion de agregacion que se aplica a los datos pivotados
+
+-- La lista de valores que se van a pivotar
+
+ 
+
+-- Ejemplo basico de pivot
+
+-- Cuenta el numero de veces que aparece cada producto  
+
+ 
+
+SELECT *
+
+FROM   (SELECT PRODUCTO, CANTIDAD FROM   pivot)
+
+PIVOT  ( count(CANTIDAD) FOR (PRODUCTO) IN ('AGUACATES','BANANAS','MANZANA','NARANJA'));
+
+ 
+
+SELECT *
+
+FROM   (SELECT PRODUCTO, CANTIDAD FROM   pivot)
+
+PIVOT  (SUM(CANTIDAD) AS CANTIDAD FOR (PRODUCTO) IN ('AGUACATES','BANANAS','MANZANA','NARANJA'));
+
+ 
+
+SELECT *
+
+FROM   (SELECT CLIENTE,PRODUCTO, CANTIDAD FROM   pivot)
+
+PIVOT  (SUM(CANTIDAD) AS CANTIDAD FOR (PRODUCTO) IN ('AGUACATES','BANANAS','MANZANA','NARANJA'));
+
+
+
+
+
+
 
 -- Unpivot
 
+-- Se utiliza para transformar columnas en filas
 
+-- Permite reorganizar y resumir datos  
+
+-- Facilita el análisis y la presentación de datos en un formato tabular más legible  
+
+ 
+
+-- Aca se crea una tabla un_pivot a partir de la tabla pivot
+
+-- Muestra la cantidad de cada producto por cliente
+
+SELECT *
+
+FROM   (SELECT CLIENTE,PRODUCTO, CANTIDAD FROM   pivot)
+
+PIVOT  (SUM(CANTIDAD) FOR (PRODUCTO) IN ('AGUACATES' AS "AGUACATES",'BANANAS' AS "BANANA",'MANZANA' AS "MANZANA",'NARANJA' AS "NARANJA"));
+
+ 
+
+DROP TABLE UN_PIVOT;
+
+ 
+
+-- Creamos una tabla, un_pivot, que contiene los datos pivotados
+
+CREATE TABLE UN_PIVOT AS
+
+SELECT *
+
+FROM   (SELECT CLIENTE,PRODUCTO, CANTIDAD FROM   pivot)
+
+PIVOT  (SUM(CANTIDAD) FOR (PRODUCTO) IN ('AGUACATES' AS "AGUACATES",'BANANAS' AS "BANANA",'MANZANA' AS "MANZANA",'NARANJA' AS "NARANJA"));
+
+ 
+
+SELECT * FROM UN_PIVOT;
+
+ 
+
+-- Ahora se hace el unpivot
+
+-- Transforma las columnas de productos en filas  
+
+ 
+
+SELECT * FROM UN_PIVOT
+
+UNPIVOT (CANTIDAD FOR PRODUCTO IN ("AGUACATES","BANANA","MANZANA","NARANJA"))
+
+ORDER BY CLIENTE,PRODUCTO;
+
+-   JSON en Oracle SQL
+
+ 
+
+-- Es un formato de datos ligero y fácil de leer
+
+-- Utilizado para el intercambio de datos entre aplicaciones web
+
+ 
+
+-- Oracle Database proporciona soporte nativo para JSON a partir de la versión 12c
+
+ 
+
+-- Crear Campo con JSON version 19c y anteriores
+
+-- En la version 19c y anteriores
+
+-- no existe el tipo de dato JSON nativo  
+
+ 
+
+-- Se utiliza VARCHAR2 o CLOB para almacenar datos JSON
+
+-- y se valida el formato JSON utilizando restricciones CHECK
+
+-- Ejemplo de tabla con campo JSON utilizando VARCHAR2 y restricción CHECK
+
+ 
+
+-- Si el contenido no es un JSON valido
+
+-- no lo permite insertar
+
+ 
+
+CREATE TABLE productos (
+
+  codigo INT,
+
+  nombre VARCHAR2(200),
+
+  datos VARCHAR2(4000)
+
+CONSTRAINT x1 CHECK (datos IS JSON));
+
+ 
+
+desc productos;
+
+ 
+
+insert into productos
+
+values ( 1,'ejemplo1',
+
+'
+
+  {
+
+    "pais": "Argentina",
+
+    "ciudad": "Buenos aires",
+
+    "poblacion": 1000000
+
+  }
+
+');
+
+ 
+
+select datos from productos;
+
+
+
+
+-- Crear Campo con JSON version 21c y posteriores
+
+ 
+
+-- en la 21c ya existe el tipo de dato JSON nativo
+
+-- que mejora el rendimiento y la funcionalidad
+
+ 
+
+CREATE TABLE productos1 (
+
+  codigo INT,
+
+  nombre VARCHAR2(200),
+
+  datos json
+
+);
+
+
+
+
+insert into productos1
+
+values ( 1,'ejemplo1',
+
+'
+
+  {
+
+    "pais": "Argentina",
+
+    "ciudad": "Buenos aires",
+
+    "poblacion": 1000000
+
+  }
+
+');
+
+ 
+
+-- Acceder a los datos mediante notacion por puntos
 
 
 
