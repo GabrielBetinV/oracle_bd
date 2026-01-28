@@ -3911,7 +3911,7 @@ UNPIVOT (CANTIDAD FOR PRODUCTO IN ("AGUACATES","BANANA","MANZANA","NARANJA"))
 
 ORDER BY CLIENTE,PRODUCTO;
 
--   JSON en Oracle SQL
+--   JSON en Oracle SQL
 
  
 
@@ -3981,7 +3981,7 @@ values ( 1,'ejemplo1',
 
 ');
 
- 
+ commit;
 
 select datos from productos;
 
@@ -4033,7 +4033,428 @@ values ( 1,'ejemplo1',
 
 -- Acceder a los datos mediante notacion por puntos
 
+select datos from productos1;
 
+select prod1.datos.pais from productos1 prod1;
+
+
+insert into productos1
+values ( 2,'ejemplo1',
+'
+  {
+    "pais": "Argentina",
+    "ciudad": "Buenos aires",
+    "poblacion": 1000000,
+    "direccion":{
+             "calle": "xcxxxxx",
+             "piso": 5,
+             "puerta": "c"
+             }
+  }
+');
+
+commit;
+
+select prod1.datos.direccion from productos1 prod1;
+
+select prod1.datos.direccion.puerta from productos1 prod1;
+
+
+insert into productos1
+values ( 3,'ejemplo3',
+'
+  {
+    "pais": "Francia",
+    "ciudad": "Paris",
+    "poblacion": 1500000,
+    "direccion":{
+             "calle": "xcxxxxx",
+             "piso": 5,
+             "puerta": "c"
+             },
+    "telefonos": [
+        "111-111111",
+        "222-222222"
+    ]
+  }
+');
+commit;
+
+select datos from productos1;
+
+select prod1.datos.telefonos from productos1 prod1;
+select prod1.datos.telefonos[0] from productos1 prod1;
+
+-- Comprobar si un contenido es de tipo JSON
+-- Utilizando la funcion IS JSON
+
+/*
+   IS JSON
+   IS NOT JSON
+
+*/
+
+CREATE TABLE ejemplo (
+  codigo INT,
+  fichero CLOB
+);
+
+insert into ejemplo values(1,'{"col1":"prueba"}');
+insert into ejemplo values(2,'Esto es una prueba');
+insert into ejemplo values(3,'<doc> <col1>prueba</col1></doc>');
+commit;
+
+select * from ejemplo where fichero is json;
+
+select * from ejemplo where fichero is not json;
+
+
+
+-- Comprobar  si un atributo existe
+
+
+/*
+
+   JSON_EXISTS(campo_json,expresion_json,on_error);
+   */
+
+drop table productos1;
+
+CREATE TABLE productos1 (
+  codigo INT,
+  nombre VARCHAR2(200),
+  datos json
+);
+
+insert into productos1
+values ( 1,'ejemplo1',
+'
+  {
+    "pais": "Argentina",
+    "ciudad": "Buenos aires",
+    "poblacion": 1000000
+  }
+');
+commit;
+
+
+insert into productos1
+values ( 2,'ejemplo1',
+'
+  {
+    "pais": "Argentina",
+    "ciudad": "Buenos aires",
+    "poblacion": 1000000,
+    "direccion":{
+             "calle": "xcxxxxx",
+             "piso": 5,
+             "puerta": "c"
+             }
+  }
+');
+commit;
+
+insert into productos1
+values ( 3,'ejemplo3',
+'
+  {
+    "pais": "Francia",
+    "ciudad": "Paris",
+    "poblacion": 1500000,
+    "direccion":{
+             "calle": "xcxxxxx",
+             "piso": 5,
+             "puerta": "c"
+             },
+    "telefonos": [
+        "111-111111",
+        "222-222222"
+    ]
+  }
+');
+commit;
+
+insert into productos1
+values ( 4,'ejemplo4',
+'
+  {
+    "pais": "Italia",
+    "ciudad": "Roma",
+    "poblacion": 1400000,
+    "direccion":{
+             "calle": "xcxxxxx",
+             "piso": 4,
+             "puerta": ""
+             },
+    "telefonos": [
+        "111-111111AA",
+        "222-222222BB"
+    ]
+  }
+');
+commit;
+
+insert into productos1
+values ( 5,'ejemplo5',
+'
+  {
+    "pais": "Inglaterra",
+    "ciudad": "Londres",
+    "poblacion": 10009000
+  }
+');
+commit;
+
+-- Validamos si el atributo ciudad existe
+-- en el campo JSON datos
+select prod1.datos
+from productos1 prod1
+where json_exists(prod1.datos,'$.ciudad');
+
+
+-- Validamos si el atributo direccion existe
+-- en el campo JSON datos
+select prod1.datos
+from productos1 prod1
+where json_exists(prod1.datos,'$.direccion');
+
+
+-- Validamos si el atributo direccion.calle existe
+-- en el campo JSON datos
+select prod1.datos
+from productos1 prod1
+where json_exists(prod1.datos,'$.direccion.calle');
+
+
+
+-- Recuperar datos simples de un campo JSON
+
+/*
+
+   JSON_VALUE(campo_json,expresion_json);
+   
+   Devuelve un valor único, de tipo escalar
+   No un objeto ni un array
+   */
+
+select json_value(prod1.datos,'$.pais') from productos1 prod1;
+select json_value(prod1.datos,'$.pais' returning varchar(100)) from productos1 prod1;
+
+
+-- Si no son escalare no funciona
+select json_value(prod1.datos,'$.direccion') from productos1 prod1;
+select json_value(prod1.datos,'$.telefonos') from productos1 prod1;
+select json_value(prod1.datos,'$.telefonos[0]') from productos1 prod1;
+
+
+-- Recuperar datos complejos de un campo JSON
+-- Objetos o arrays
+
+/*
+
+   JSON_QUERY(campo_json,expresion_json,on_error);
+   
+   Permite devolver un valor, array o un sub-documento anidado
+   */
+select json_query(prod1.datos,'$.pais') from productos1 prod1;
+select json_query(prod1.datos,'$.direccion') from productos1 prod1;
+select json_query(prod1.datos,'$.direccion.calle') from productos1 prod1;
+select json_query(prod1.datos,'$.telefonos') from productos1 prod1;
+select json_query(prod1.datos,'$.telefonos[0]') from productos1 prod1;
+
+
+
+-- Convertir JSON a formato relacional
+
+/*
+
+   JSON_TABLE
+   (campo_json,lista_de_columnas)
+   
+   Permite convertir datos JSON a relacionales
+
+    Muestra datos escalares y estructurados en formato de tabla
+    los arrays u ojetos no los interpreta como tal
+    se debe especificar el valor a mostrar
+
+   */
+     
+         
+   select pais,ciudad
+       from productos1 prod1,json_table(prod1.datos,'$' COLUMNS(pais PATH '$.pais', ciudad path '$.ciudad'));
+   
+   select pais,direccion
+       from productos1 prod1,json_table(prod1.datos,'$' COLUMNS(pais PATH '$.pais', direccion path '$.direccion.calle'));
+
+
+
+-- JSON_MERGEPATH
+/*
+
+   MODIFICAR JSON
+   
+   - Antes de la 19c- Había que modificar todo el campo completo
+   - En la 19c aparece JSON_MERGEPATCH para actualizar trozos
+   - En la 21c aparece JSON_TRANSFORM que es un poco más potente
+   
+   */
+   
+   
+   select datos from productos1;
+   
+
+   --- Esta es la forma antigua de modificar un JSON
+   -- Modificar uno existente
+   update productos1 set datos='
+  {
+    "pais": "Argentina",
+    "ciudad": "Buenos aires",
+    "poblacion": 2000000
+  }'
+  where codigo=1;
+ commit;
+ 
+  -- Añadir un elemento
+     update productos1 set datos='
+  {
+    "pais": "Argentina",
+    "ciudad": "Buenos aires",
+    "poblacion": 2100000,
+    "estado": true
+  }'
+  where codigo=1;
+  commit;
+ 
+
+  -- Esta es la forma nueva de modificar un JSON
+  -- JSON_MERGEPATCH
+      update productos1 set datos=JSON_MERGEPATCH(
+      datos,
+      '{
+            "estado": false
+      }'
+      )
+  where codigo=1;
+  commit;
+ 
+ 
+     update productos1 set datos=JSON_MERGEPATCH(
+      datos,
+      '{
+            "estado": true,
+            "c1": 10
+      }'
+      )
+  where codigo=1;
+  commit;
+ 
+ 
+ 
+
+
+-- JSON_TRANSFORM  
+-- Permite modificar, añadir o eliminar elementos de un JSON
+-- de forma más flexible y potente  
+
+-- Multiples operaciones en una sola llamada
+-- Solo esta disponible a partir de la version 21c
+
+/*
+  operaciones:
+
+  SET 'ruta' = valor => para añadir o modificar un valor
+  REMOVE 'ruta' => para eliminar un valor
+  INSERT 'ruta' = valor => para añadir un valor en un array
+  APPEND 'ruta' = valor => para añadir un valor al final de un array
+  RENAME 'ruta_vieja' TO 'ruta_nueva' => para renombrar un campo
+  REPLACE 'ruta' = valor => para reemplazar un valor existente
+  KEEP 'ruta' => para mantener solo los campos especificados y eliminar los demás
+
+*/
+
+-- Ejemplo de uso de JSON_TRANSFORM
+select datos from productos1;
+
+
+-- Update con JSON_TRANSFORM
+-- Modificar el valor de poblacion  
+update productos1 set datos=JSON_TRANSFORM( datos, SET '$.poblacion' = 3000000)
+where codigo = 1;
+commit;
+
+
+-- Añadir un nuevo campo estado
+update productos1 set datos=JSON_TRANSFORM( datos, SET '$.estado' = 'true')
+where codigo = 1;
+commit;
+
+
+
+
+-- Se puede hacer con cualquier sentencia DML
+
+-- Ejemplo con select, muestra el JSON modificado sin alterar el original
+-- No modifica el campo registrado en la tabla
+select JSON_TRANSFORM( datos, SET '$.poblacion' = 4000000, SET '$.nuevo_campo' = 'valor_nuevo') as datos_modificados
+from productos1
+where codigo = 1;
+
+-- Insertar un nuevo elemento en un array
+select JSON_TRANSFORM( datos, INSERT '$.telefonos[0]' = '123456789') as datos_modificados
+from productos1
+where codigo = 1;
+
+-- Appendar un nuevo elemento al final de un array
+-- Lo agrega al final del array
+select JSON_TRANSFORM( datos, APPEND '$.telefonos' = '987654321') as datos_modificados
+from productos1
+where codigo = 3;
+
+-- Tambien se puede indicar la posicion
+-- Lo agrega en la posicion 1 del array
+
+select JSON_TRANSFORM( datos, INSERT '$.telefonos[1]' = '555555555') as datos_modificados
+from productos1
+where codigo = 3;
+
+
+
+-- Si la columna no existe, genera un error
+
+
+-- Cambiar el nombre de un campo
+select JSON_TRANSFORM( datos, RENAME '$.poblacion' = 'poblacion_total' ) as datos_modificados
+from productos1
+where codigo = 1;
+
+
+-- Tambien se puede reemplazar un valor existente
+-- A difeencia del set, si el elemento no existe, no lo crea
+select JSON_TRANSFORM( datos, REPLACE '$.pais' = 'Brasil' ) as datos_modificados
+from productos1
+where codigo = 1;
+
+
+-- Eliminar
+-- Elimina el campo estado
+select JSON_TRANSFORM( datos, REMOVE '$.estado' ) as datos_modificados
+from productos1
+where codigo = 1;
+
+
+-- Mantener solo los campos especificados
+-- Elimina todos los campos excepto pais y ciudad  
+select JSON_TRANSFORM( datos, KEEP '$.pais', KEEP '$.ciudad' ) as datos_modificados
+from productos1
+where codigo = 1;
+
+
+-- se puede combinar varias operaciones
+-- Modificar poblacion, eliminar estado y renombrar ciudad a localidad
+
+select JSON_TRANSFORM( datos, SET '$.poblacion' = 5000000, REMOVE '$.estado', RENAME '$.ciudad' = 'localidad' ) as datos_modificados
+from productos1
+where codigo = 1;
 
 
 
