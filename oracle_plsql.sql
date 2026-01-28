@@ -425,7 +425,7 @@ END;
 -- en este caso , toma la variable x del bloque hijo.
 
 
-SET SERVEROUTPUT ON
+SET SERVEROUTPUT ON;
 
 DECLARE
     x   NUMBER := 20;  --GLOBAL
