@@ -482,3 +482,445 @@ END;
     * FOR ... END FOR
 
 */
+
+-- Estructuras de control
+-- Permiten controlar el flujo de ejecución del código PL/SQL.  
+
+/*
+  - Estructuras condicionales:
+    * IF ... THEN ... ELSE
+    * CASE
+
+  - Bucles:
+    * LOOP ... END LOOP
+    * WHILE ... END WHILE
+    * FOR ... END FOR
+
+*/
+
+
+-- Operadores logicos
+
+/*
+   Operadores relacionales o de comparacion
+
+     = : Igualdad
+    <> o != : Diferente
+    < : Menor que
+    > : Mayor que 
+    <= : Menor o igual que
+    >= : Mayor o igual que  
+
+
+    Operaciones logicos
+
+    AND : Operador lógico Y
+    OR : Operador lógico O
+    NOT  : Negacion
+         
+*/
+
+
+
+
+-- Comando IF y ELSE
+-- Se utiliza para  condiciones simple, si se cumple una condicion
+-- Ejecuta un programa o una sentencia
+-- Si no, ejecuta algo
+
+
+SET SERVEROUTPUT ON;
+DECLARE
+    x   NUMBER := 20;
+BEGIN
+    IF
+        x = 10
+    THEN
+        dbms_output.put_line('X:=10');
+    ELSE
+        dbms_output.put_line('X:=OTHER VALUE');
+    END IF;
+END;
+
+
+
+
+-- Comando ElSIF
+-- Multiples condiciones
+
+
+SET SERVEROUTPUT ON
+
+DECLARE
+    sales   NUMBER := 25000;
+    bonus   NUMBER := 0;
+BEGIN
+    IF
+        sales > 50000
+    THEN
+        bonus := 1500;
+    ELSIF sales > 35000 THEN
+        bonus := 500;
+    ELSIF sales > 20000 THEN
+        bonus := 150;
+    ELSE
+        bonus := 100;
+    END IF;
+
+    dbms_output.put_line('Sales = '
+    || sales
+    || ', bonus = '
+    || bonus
+    || '.');
+
+END;
+
+
+-- Comando CASE
+--  Una forma mas simple de costruir condiciones multiples
+
+
+SET SERVEROUTPUT ON
+declare                                                                                         
+  v1 CHAR(1);
+BEGIN
+  v1 := 'B';
+  CASE v1
+    WHEN 'A' THEN DBMS_OUTPUT.PUT_LINE('Excellent');
+    WHEN 'B' THEN DBMS_OUTPUT.PUT_LINE('Very Good');
+    WHEN 'C' THEN DBMS_OUTPUT.PUT_LINE('Good');
+    WHEN 'D' THEN DBMS_OUTPUT.PUT_LINE('Fair');
+    WHEN 'F' THEN DBMS_OUTPUT.PUT_LINE('Poor');
+    ELSE DBMS_OUTPUT.PUT_LINE('POOR¡¡¡¡');
+  END CASE;
+END;
+/                                                                                                                                 
+
+
+-- Serached CASE
+-- Nos permite hacer mas de una condicion, no solo el de igualdad
+-- p por ejemplo condicion 1 y condicion 2
+
+SET SERVEROUTPUT ON
+declare                                                                                         
+  bonus  number;
+BEGIN
+  bonus := 100;
+  CASE 
+    WHEN bonus >500 THEN DBMS_OUTPUT.PUT_LINE('Excellent');
+    WHEN bonus <= 500 and bonus > 250 THEN DBMS_OUTPUT.PUT_LINE('Very Good');
+    WHEN bonus <= 250 and bonus > 100 THEN DBMS_OUTPUT.PUT_LINE('Good');
+    ELSE DBMS_OUTPUT.PUT_LINE('POOR¡¡¡¡');
+  END CASE;
+END;
+/          
+
+
+-- Bucle LOOP
+-- Su formato mas sencillo es un bicle infinito
+-- Se le debe indicar una condicion de salida
+
+-- Se utiliza cuando no se conoce el numero de iteraciones
+SET SERVEROUTPUT ON;
+DECLARE
+   X NUMBER:=1;
+BEGIN
+    LOOP 
+     DBMS_OUTPUT.PUT_LINE(X);
+     X:=X+1;
+
+     -- Forma 1 para condicionar la salida
+    /* IF X = 11
+       THEN EXIT;
+     END IF;*/
+
+     -- Forma 2 para condicionar la salida
+     EXIT WHEN X=11;
+    END LOOP;
+END;
+/
+
+
+-- Loop anidados
+-- Loops dentro de un loops
+
+-- Se colocan etiquetas para identificarlas
+SET SERVEROUTPUT ON;
+DECLARE
+  s  PLS_INTEGER := 0;
+  i  PLS_INTEGER := 0;
+  j  PLS_INTEGER;
+BEGIN
+
+  -- Etiqueta para el loop iniciar
+  <<parent>>
+  LOOP
+    i := i + 1;
+    j := 100;
+    DBMS_OUTPUT.PUT_LINE('Parent:'||i);
+
+    -- Etiqueta para el loop que esta interno, el hijo
+    <<child>>
+    LOOP
+      --Print child
+      dbms_output.put_line('Child:'||j);
+      j:=j+1;
+  
+      -- En las salidas, se indica la etiqueta del loop que queremos salir
+      EXIT parent WHEN (i> 3);
+      EXIT child WHEN (j > 105);
+    END LOOP child;
+  END LOOP parent;
+  DBMS_OUTPUT.PUT_LINE('FINISH¡¡¡');
+END;
+/
+ 
+
+
+-- Comando Continue
+-- Impide que siga las lineas, y se va al principio para 
+-- Seguir con la siguiente iteracion
+
+
+SET SERVEROUTPUT ON;
+DECLARE
+  x NUMBER := 0;
+BEGIN
+  LOOP -- CON CONTINUE SALTAMOS AQUI
+    DBMS_OUTPUT.PUT_LINE ('LOOP:  x = ' || TO_CHAR(x));
+    x := x + 1;
+    /*IF x < 3 THEN
+      CONTINUE;
+    END IF;*/
+    CONTINUE WHEN X <3;
+    DBMS_OUTPUT.PUT_LINE
+      ('DESPUES DE  CONTINUE:  x = ' || TO_CHAR(x));
+    EXIT WHEN x = 5;
+  END LOOP;
+ 
+  DBMS_OUTPUT.PUT_LINE (' DESPUES DEL  LOOP:  x = ' || TO_CHAR(x));
+END;
+/
+
+
+
+-- Bucle FOR
+
+-- Se coloa el valor inicial y el valor final
+-- Deben ser numericos
+
+set serveroutput on
+BEGIN
+    FOR i IN 5..15 LOOP   --PLS_INTEGER
+        dbms_output.put_line(i);
+    END LOOP;
+END;
+/
+
+
+-- BUCLE FOR REVERSE
+-- Recorreo de modo inverso, por ejemplo
+-- del 15 al 5, pero los parametros siguen ogual, valor inicial .......  valor final
+-- lo que lo diferencia es la palabra reverse
+
+-- tambien se puede utilizar exit y continue
+
+set serveroutput on
+BEGIN
+    FOR i IN REVERSE 5..15 LOOP   --PLS_INTEGER
+        dbms_output.put_line(i);
+        EXIT WHEN i=10;
+    END LOOP; 
+END;
+/
+
+-- Es importante tener en cuenta
+-- Que la variable i del bucle no se declara  antes, porque siempre va a ser
+-- pls_integer, numerico
+
+-- Si se declara antes, es una variable independiente
+
+set serveroutput on
+DECLARE 
+  i VARCHAR2(100):='AAAAA';
+BEGIN
+    FOR i IN REVERSE 5..15 LOOP   --PLS_INTEGER
+        dbms_output.put_line(i);
+        EXIT WHEN i=10;
+    END LOOP;
+    dbms_output.put_line(i);
+END;
+/
+
+
+
+-- Bucle While
+-- Permite realizar un bucle controlado
+-- Se coloca la condicion o la egacion de una condicion antes, y si se cumple, ingresa al loop
+
+
+-- tambien se puede utilizar exit y continue
+
+set serveroutput on
+DECLARE
+  done  BOOLEAN := FALSE;
+  X NUMBER:=0;
+BEGIN
+  
+  WHILE X <10 LOOP
+    DBMS_OUTPUT.PUT_LINE(X);
+    X:=X+1;
+    EXIT WHEN X=5;
+  END LOOP;
+
+  WHILE done LOOP
+    DBMS_OUTPUT.PUT_LINE ('No imprimas esto.');
+    done := TRUE;  
+  END LOOP;
+
+  WHILE NOT done LOOP
+    DBMS_OUTPUT.PUT_LINE ('He pasado por aqu�');
+    done := TRUE;
+  END LOOP;
+END;
+/
+
+
+-- Comando GOTO
+--  Nos permite irnos a un punto o bloque  especifico del programa
+-- No se recomienda, porque rompe la programacion logica estructurada
+
+-- Se coloca una etiqueta, para identificar en donde se debe ubicar
+set serveroutput on
+DECLARE
+  p  VARCHAR2(30);
+  n  PLS_INTEGER :=5;
+BEGIN
+  FOR j in 2..ROUND(SQRT(n)) LOOP
+    IF n MOD j = 0 THEN
+      p := ' no es un n�mero primo';
+      GOTO print_now;
+    END IF;
+  END LOOP;
+
+  p := ' Es un n�mero primo';
+ 
+  <<print_now>>
+  DBMS_OUTPUT.PUT_LINE(TO_CHAR(n) || p);
+END;
+/
+
+
+
+-- Usar SQL en  PL/SQl
+
+-- POdemos hacer los select, pero con la clausula into
+-- y el query solo debe devolver una sola fila
+-- se pueden consultar varias columnas con varios into, pero el query
+-- solo debe retornar una sola fila
+
+-- y si no hay flas, genera un error data found
+
+SET SERVEROUTPUT ON
+DECLARE
+    salario   NUMBER;
+    NOMBRE EMPLOYEES.FIRST_NAME%TYPE;
+BEGIN
+    SELECT  --SOLO PUEDE DEVOLVER UNA FILA
+        salary,FIRST_NAME INTO salario,NOMBRE
+    FROM
+        employees
+    WHERE
+        employee_id = 10000;
+    dbms_output.put_line(salario);
+      dbms_output.put_line(NOMBRE);
+END;
+/
+
+
+
+
+
+-- %ROWTYPE
+-- Es para cuando voya  hacer un select y quiero recuperar toda la fila
+-- Es decir, en una variable guardare todos los campos de la tabla
+
+
+-- Si se hace cambio sobre la variable rowtype, no afecta el registro de la tabla original
+SET SERVEROUTPUT ON
+DECLARE
+    salario   NUMBER;
+    NOMBRE EMPLOYEES.FIRST_NAME%TYPE;
+    EMPLEADO EMPLOYEES%ROWTYPE;
+BEGIN
+    SELECT  --SOLO PUEDE DEVOLVER UNA FILA
+        * INTO EMPLEADO
+    FROM
+        employees
+    WHERE
+        employee_id = 100;
+
+    
+    -- De esta manera  obtengo los valores de cada campo
+    dbms_output.put_line(EMPLEADO.SALARY*100);
+    dbms_output.put_line(EMPLEADO.FIRST_NAME);
+END;
+/
+
+
+-- INSERT EN PL SQL
+-- Se hace igual que en sql, pero se recomienda dentro de un bloque
+-- Se utilizan variables para colocar en el values
+-- Se debe indicar el commit
+
+DECLARE
+   COL1 TEST.C1%TYPE;
+BEGIN
+   COL1:=20;
+   INSERT INTO TEST (C1,C2) VALUES (COL1,'BBBBBBB');
+   COMMIT;
+END;
+/
+
+
+
+
+
+-- UPDATES EN PL SQL 
+-- Se hace igual que en sql, pero se recomienda dentro de un bloque
+-- Se pueden utilizar variaables para colocarles como el valor a actualizar
+-- en el campo correspondiente
+-- Se debe indicar el commit
+
+
+
+DECLARE
+   T TEST.C1%TYPE;
+BEGIN
+   T:=10;
+   UPDATE TEST SET C2='CCCCC' WHERE C1=T;
+   COMMIT;
+END;
+/
+
+
+
+-- DELETE EN PL SQL
+-- Se hace igual que en sql, pero se recomienda dentro de un bloque
+-- Se pueden utilizar variaables para  colocarle al valor
+-- sobre los campos del where
+-- Se debe indicar el commit
+
+
+
+DECLARE
+    T TEST.C1%TYPE;
+BEGIN
+    T:=20;
+    DELETE FROM TEST WHERE C1=T;
+    COMMIT;
+END;
+/
+
+
+
