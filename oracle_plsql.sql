@@ -9,7 +9,7 @@ END;
 -- Visualizar salida por pantalla
 -- Se utiliza el paquete DBMS_OUTPUT para mostrar mensajes en la consola.
 -- Asegúrate de habilitar la salida en tu entorno de desarrollo (por ejemplo, SQL*Plus o SQL Developer).
-SET SERVEROUTPUT ON;
+SET SERVEROUTPUT ON;;
 BEGIN
   DBMS_OUTPUT.PUT_LINE('Hola, Mundo!');
   DBMS_OUTPUT.PUT_LINE(100 + 200);
@@ -83,7 +83,7 @@ END;
         v_activo BOOLEAN := TRUE;
 */
 
-set SERVEROUTPUT ON;
+SET SERVEROUTPUT ON;;
 DECLARE 
   NAME VARCHAR2(100);
   LASTNAME VARCHAR2(50);
@@ -250,7 +250,7 @@ END;
 -- Se puede asignar explícitamente a una variable para indicar que no tiene valor.  
 
 
-SET SERVEROUTPUT ON;
+SET SERVEROUTPUT ON;;
 DECLARE     
   v_pi CONSTANT NUMBER := 3.1416; -- Declaración de una constante, se debe inicializar al declararla sino da error
   v_nombre VARCHAR2(50);          -- Declaración de una variable  
@@ -271,7 +271,7 @@ END;
 -- Son variables que pueden tomar los valores TRUE, FALSE o NULL.
 -- Se utilizan para controlar el flujo de ejecución en estructuras condicionales y bucles.  
 
-SET SERVEROUTPUT ON;
+SET SERVEROUTPUT ON;;
 DECLARE 
   v_es_mayor BOOLEAN; -- Declaración de una variable booleana
   v_edad NUMBER := 20; -- Declaración de una variable numérica    
@@ -290,7 +290,7 @@ END;
 -- Se utiliza para declarar una variable con el mismo tipo de dato que una columna de una tabla o una variable existente.
 -- Esto ayuda a mantener la consistencia de tipos de datos y facilita el mantenimiento del código.
 
-SET SERVEROUTPUT ON;
+SET SERVEROUTPUT ON;;
 DECLARE 
   v_salario employees.salary%TYPE; -- Declaración de una variable con el mismo tipo que la columna salario de la tabla empleados 
 BEGIN
@@ -323,7 +323,7 @@ END;
          
 */
 
-SET SERVEROUTPUT ON;
+SET SERVEROUTPUT ON;;
 DECLARE 
   v_a NUMBER := 10; 
   v_b NUMBER := 20; 
@@ -375,7 +375,7 @@ END;
 -- Comentario de una sola línea
 
 -- Este es un comentario de una sola línea
-SET SERVEROUTPUT ON;
+SET SERVEROUTPUT ON;;
 DECLARE 
   v_pi CONSTANT NUMBER := 3.1416; -- Declaración de una constante, se debe inicializar al declararla sino da error
   v_nombre VARCHAR2(50);          -- Declaración de una variable  
@@ -402,7 +402,7 @@ END;
 -- Son bloques PL/SQL que se encuentran dentro de otros bloques PL/SQL.
 -- Permiten organizar el código en secciones lógicas y manejar el alcance de las variables. 
 
-SET SERVEROUTPUT ON;
+SET SERVEROUTPUT ON;;
 DECLARE
 BEGIN
     dbms_output.put_line('EN EL PRIMER BLOQUE');
@@ -425,7 +425,7 @@ END;
 -- en este caso , toma la variable x del bloque hijo.
 
 
-SET SERVEROUTPUT ON;
+SET SERVEROUTPUT ON;;
 
 DECLARE
     x   NUMBER := 20;  --GLOBAL
@@ -448,7 +448,7 @@ END;
 -- No se permiten funcones de grupos, como las usamos en los select
 -- tienen que ser de una sola linea
 
-SET SERVEROUTPUT ON
+SET SERVEROUTPUT ON;
 DECLARE
   X VARCHAR2(50);
   MAYUS VARCHAR2(100);
@@ -529,7 +529,7 @@ END;
 -- Si no, ejecuta algo
 
 
-SET SERVEROUTPUT ON;
+SET SERVEROUTPUT ON;;
 DECLARE
     x   NUMBER := 20;
 BEGIN
@@ -549,7 +549,7 @@ END;
 -- Multiples condiciones
 
 
-SET SERVEROUTPUT ON
+SET SERVEROUTPUT ON;
 
 DECLARE
     sales   NUMBER := 25000;
@@ -580,7 +580,7 @@ END;
 --  Una forma mas simple de costruir condiciones multiples
 
 
-SET SERVEROUTPUT ON
+SET SERVEROUTPUT ON;
 declare                                                                                         
   v1 CHAR(1);
 BEGIN
@@ -601,7 +601,7 @@ END;
 -- Nos permite hacer mas de una condicion, no solo el de igualdad
 -- p por ejemplo condicion 1 y condicion 2
 
-SET SERVEROUTPUT ON
+SET SERVEROUTPUT ON;
 declare                                                                                         
   bonus  number;
 BEGIN
@@ -621,7 +621,7 @@ END;
 -- Se le debe indicar una condicion de salida
 
 -- Se utiliza cuando no se conoce el numero de iteraciones
-SET SERVEROUTPUT ON;
+SET SERVEROUTPUT ON;;
 DECLARE
    X NUMBER:=1;
 BEGIN
@@ -645,7 +645,7 @@ END;
 -- Loops dentro de un loops
 
 -- Se colocan etiquetas para identificarlas
-SET SERVEROUTPUT ON;
+SET SERVEROUTPUT ON;;
 DECLARE
   s  PLS_INTEGER := 0;
   i  PLS_INTEGER := 0;
@@ -682,7 +682,7 @@ END;
 -- Seguir con la siguiente iteracion
 
 
-SET SERVEROUTPUT ON;
+SET SERVEROUTPUT ON;;
 DECLARE
   x NUMBER := 0;
 BEGIN
@@ -709,7 +709,7 @@ END;
 -- Se coloa el valor inicial y el valor final
 -- Deben ser numericos
 
-set serveroutput on
+SET SERVEROUTPUT ON;
 BEGIN
     FOR i IN 5..15 LOOP   --PLS_INTEGER
         dbms_output.put_line(i);
@@ -725,7 +725,7 @@ END;
 
 -- tambien se puede utilizar exit y continue
 
-set serveroutput on
+SET SERVEROUTPUT ON;
 BEGIN
     FOR i IN REVERSE 5..15 LOOP   --PLS_INTEGER
         dbms_output.put_line(i);
@@ -740,7 +740,7 @@ END;
 
 -- Si se declara antes, es una variable independiente
 
-set serveroutput on
+SET SERVEROUTPUT ON;
 DECLARE 
   i VARCHAR2(100):='AAAAA';
 BEGIN
@@ -761,7 +761,7 @@ END;
 
 -- tambien se puede utilizar exit y continue
 
-set serveroutput on
+SET SERVEROUTPUT ON;
 DECLARE
   done  BOOLEAN := FALSE;
   X NUMBER:=0;
@@ -791,7 +791,7 @@ END;
 -- No se recomienda, porque rompe la programacion logica estructurada
 
 -- Se coloca una etiqueta, para identificar en donde se debe ubicar
-set serveroutput on
+SET SERVEROUTPUT ON;
 DECLARE
   p  VARCHAR2(30);
   n  PLS_INTEGER :=5;
@@ -821,7 +821,7 @@ END;
 
 -- y si no hay flas, genera un error data found
 
-SET SERVEROUTPUT ON
+SET SERVEROUTPUT ON;
 DECLARE
     salario   NUMBER;
     NOMBRE EMPLOYEES.FIRST_NAME%TYPE;
@@ -847,7 +847,7 @@ END;
 
 
 -- Si se hace cambio sobre la variable rowtype, no afecta el registro de la tabla original
-SET SERVEROUTPUT ON
+SET SERVEROUTPUT ON;
 DECLARE
     salario   NUMBER;
     NOMBRE EMPLOYEES.FIRST_NAME%TYPE;
@@ -921,6 +921,301 @@ BEGIN
     COMMIT;
 END;
 /
+
+
+-- Excepciones
+
+-- Sirven para controlar errores
+
+-- Hay execpciones de oracle y las que el usuario puede crear.
+
+
+-- Sintaxis de las excepciones
+/*
+SET SERVEROUTPUT ON;
+DECLARE
+    empl   employees%rowtype;
+BEGIN
+    SELECT
+        *
+    INTO
+        empl
+    FROM
+        employees
+    WHERE
+        employee_id > 1;
+
+    dbms_output.put_line(empl.first_name);
+EXCEPTION
+    WHEN ex1 THEN
+        NULL;
+    WHEN ex2 THEN
+        NULL;
+    WHEN OTHERS THEN
+        NULL;
+END;
+*/
+
+-- Excepciones predefinidas
+-- Son excepciones de oracle
+-- conjunto de errores de oracle
+
+
+-- NO_DATA_FOUND   ORA-01403  -- No hay datos
+-- TOO_MANY_ROWS              -- Mas de una fila
+-- ZERO_DIVIDE                -- Division por cero  
+-- DUP_VAL_ON_INDEX           -- LA clave ya existe
+
+
+SET SERVEROUTPUT ON;
+DECLARE
+    EMPL EMPLOYEES%ROWTYPE;
+BEGIN
+    SELECT * INTO EMPL
+    FROM EMPLOYEES
+    WHERE EMPLOYEE_ID>1;
+    
+    DBMS_OUTPUT.PUT_LINE(EMPL.FIRST_NAME);
+EXCEPTION
+-- NO_DATA_FOUND   ORA-01403
+-- TOO_MANY_ROWS
+-- ZERO_DIVIDE
+-- DUP_VAL_ON_INDEX
+   WHEN NO_DATA_FOUND THEN 
+       DBMS_OUTPUT.PUT_LINE('ERROR, EMPLEADO INEXISTENTE');
+  WHEN TOO_MANY_ROWS THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR, DEMASIADOS EMPLEADO');
+   WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR INDEFINIDO');
+
+END;
+/
+
+
+
+-- Excepciones no predefinidas
+-- on errores que sí existen en la base de datos (tienen un código ORA-xxxxx)
+-- pero NO tienen un nombre incorporado en PL/SQL como lo tienen las excepciones
+
+
+SET SERVEROUTPUT ON;
+DECLARE
+
+   -- Declaramos una variable de tipo exception
+   MI_EXCEP EXCEPTION;
+
+   -- Es una orden al compilador, cuando aparezca la excpecion, lo asocie al codigo de error (-937)
+   PRAGMA EXCEPTION_INIT(MI_EXCEP,-937);
+  
+  
+   V1 NUMBER;
+   V2 NUMBER;
+BEGIN
+    SELECT EMPLOYEE_ID,SUM(SALARY) INTO V1,V2 FROM EMPLOYEES; 
+    DBMS_OUTPUT.PUT_LINE(V1);
+EXCEPTION
+   WHEN MI_EXCEP THEN 
+       DBMS_OUTPUT.PUT_LINE('FUNCION DE GRUPO INCORRECTA');
+   WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR INDEFINIDO');
+END;
+/
+
+
+
+
+-- SQLCODE Y SQLERRM
+-- NO son excepciones, son funciones implícitas del motor PL/SQL para manejo y diagnóstico de errores.
+-- SQLCODE -> El código numérico del error (ej: -937, -2291)
+-- SQLERRM -> El mensaje del error (ej: ORA-00937: not a single-group group function)
+
+-- OJO hay que crear la tabla
+create table errors (
+  code number,
+  message varchar2(200)
+);
+
+SET SERVEROUTPUT ON;
+DECLARE
+   EMPL EMPLOYEES%ROWTYPE;
+   CODE NUMBER;
+   MESSAGE VARCHAR2(100);
+BEGIN
+   SELECT * INTO EMPL FROM EMPLOYEES;
+    DBMS_OUTPUT.PUT_LINE(EMPL.SALARY);
+EXCEPTION   
+   WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE(SQLCODE);
+        DBMS_OUTPUT.PUT_LINE(SQLERRM);
+        CODE:=SQLCODE;
+        MESSAGE:=SQLERRM;
+        INSERT INTO ERRORS VALUES (CODE,MESSAGE);
+        COMMIT;
+END;
+/
+
+
+-- Controlar SQL con excepciones
+-- Si el registro no existe, lo inserta
+
+SET SERVEROUTPUT ON;
+DECLARE
+  REG REGIONS%ROWTYPE;
+  REG_CONTROL REGIONS.REGION_ID%TYPE;
+BEGIN
+   REG.REGION_ID:=100;
+   REG.REGION_NAME:='AFRICA';
+   SELECT REGION_ID INTO REG_CONTROL FROM REGIONS
+   WHERE REGION_ID=REG.REGION_ID;
+   DBMS_OUTPUT.PUT_LINE('LA REGION YA EXISTE');
+EXCEPTION   
+   WHEN NO_DATA_FOUND  THEN
+        INSERT INTO REGIONS VALUES (REG.REGION_ID,REG.REGION_NAME);
+        COMMIT;
+END;
+/
+
+
+
+
+
+
+-- Excepciones controladas por el desarrollador
+-- Se lanza el error con raise
+
+-- RAISE, lanza el error
+SET SERVEROUTPUT ON;
+DECLARE
+   reg_max EXCEPTION;
+   regn NUMBER;
+   regt varchar2(200);
+BEGIN
+   regn:=101;
+   regt:='ASIA';
+   IF regn > 100 THEN
+         RAISE reg_max;  
+    ELSE
+       insert into regions values (regn,regt);
+       commit;
+      END IF;
+EXCEPTION
+  WHEN reg_max THEN  
+    DBMS_OUTPUT.PUT_LINE('La region no puede ser mayor de 100.');
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Error indefinido');
+END;
+/
+
+
+-- Ambito de las excepciones
+-- Son practicamente, igual a las de las variables
+
+-- Cuando tengo datos anidados, los bloques hijos puede leer la de los padres
+-- Pero el padre no puede leer la del hijo
+SET SERVEROUTPUT ON;
+DECLARE
+   
+   regn NUMBER;
+   regt varchar2(200);
+BEGIN
+   regn:=101;
+   regt:='ASIA';
+   DECLARE 
+     reg_max EXCEPTION;
+   BEGIN
+       IF regn > 100 THEN
+             RAISE reg_max;  
+       ELSE
+           insert into regions values (regn,regt);
+           commit;
+       END IF;
+    EXCEPTION
+    WHEN reg_max THEN  
+        DBMS_OUTPUT.PUT_LINE('La region no puede ser mayor de 100.BLOQUE HIJO');
+    END;
+EXCEPTION
+/*  WHEN reg_max THEN  
+    DBMS_OUTPUT.PUT_LINE('La region no puede ser mayor de 100.');*/
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Error indefinido');
+END;
+/
+
+-- Comando RAISE_APPLICATION_ERROR
+-- Se lanza un error  indicando  el codigo y mensaje propios
+-- los codigos lo inventamos nosotros
+
+/*
+
+  lanzar un error personalizado,
+  con código y mensaje propios,
+  como si fuera un error ORA real.
+
+
+  error_number  Código entre -20000 y -20999
+  error_message Mensaje claro para el usuario
+  keep_errors TRUE → conserva error original
+
+*/
+
+-- Código entre -20000 y -20999
+
+SET SERVEROUTPUT ON;
+DECLARE   
+   regn NUMBER;
+   regt varchar2(200);
+BEGIN
+   regn:=101;
+   regt:='ASIA';
+   iF regn > 100 THEN
+       -- EL CODIGO DEBE ESTAR ENTRE -20000 Y -20999
+       RAISE_APPLICATION_ERROR(-20001,'LA ID NO PUEDE SER MAYOR DE 100');  
+    ELSE
+       insert into regions values (regn,regt);
+       commit;
+    END IF;
+END;
+/
+
+
+
+-- Colecciones y tipos compuestos
+-- Son de dos tipos
+
+
+
+--  1. PL/SQL Records , son parecidos a una fila 
+-- Ejemplo , el %rowtype
+
+--  2. Colecciones, son parecias a las tablas
+     --  Arrays asociativos
+     --  Tablas anidadas, nested tables
+     --  varrays
+
+
+
+--  1. PL/SQL Records , son parecidos a una fila 
+-- Una opciones es el %rowtype
+-- Declararlo 
+-- TYPE nombre  IS RECORD
+-- Despues que lo declaro, le puedo agregar los campos de ese record
+
+/*
+  Ejemplo
+
+  TYPE empleado IS RECORD
+  (
+  nombre varchar2 (100),
+  salario numbr,
+  fecha employees.hire_date%type,
+  datos_completos employees%rowtype
+
+  );
+
+Se declara la variable del tipo record
+emple1 empleado;
+
+*/
 
 
 
