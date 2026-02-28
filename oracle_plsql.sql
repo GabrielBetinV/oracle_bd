@@ -1217,5 +1217,261 @@ emple1 empleado;
 
 */
 
+-- Cursores
 
+-- Hay dos tipos de cursores, los explicitos y los implicitos
+
+-- Cursores implicitos
+-- Son aquellos que se generan automáticamente al ejecutar una sentencia SQL que devuelve una sola fila (SELECT ... INTO).
+-- No requieren declaración explícita ni control manual de apertura, recuperación y cierre.
+-- Se utilizan para manejar resultados de consultas que devuelven una sola fila.
+-- Ejemplo de cursor implícito:
+set serveroutput on;
+DECLARE
+  v_employee_id employees.employee_id%TYPE;
+  v_first_name employees.first_name%TYPE;   
+BEGIN
+  SELECT employee_id, first_name INTO v_employee_id, v_first_name FROM employees WHERE employee_id = 100; -- Esta consulta devuelve una sola fila
+  DBMS_OUTPUT.PUT_LINE('ID: ' || v_employee_id || ', Name: ' || v_first_name);
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('No se encontró el empleado.');    
+  WHEN TOO_MANY_ROWS THEN
+    DBMS_OUTPUT.PUT_LINE('Se encontró más de un empleado con el mismo ID.');    
+END;
+/ 
+
+
+
+-- Cursores explicitos
+-- Son aquellos que el programador define y controla su apertura, recuperación de datos y cierre.
+-- Se declaran con la palabra clave CURSOR y se les asigna una consulta SQL.
+-- Se utilizan para manejar conjuntos de resultados que devuelven varias filas.
+-- Ejemplo de cursor explícito:
+set serveroutput on;
+DECLARE
+  CURSOR c_empleados IS
+    SELECT employee_id, first_name, salary FROM employees;
+  v_employee_id employees.employee_id%TYPE;
+  v_first_name employees.first_name%TYPE;
+  v_salary employees.salary%TYPE;
+BEGIN
+  OPEN c_empleados; -- Abrir el cursor
+  LOOP
+    FETCH c_empleados INTO v_employee_id, v_first_name, v_salary; -- Recuperar datos
+    EXIT WHEN c_empleados%NOTFOUND; -- Salir del bucle cuando no haya más filas
+    DBMS_OUTPUT.PUT_LINE('ID: ' || v_employee_id || ', Name: ' || v_first_name || ', Salary: ' || v_salary);
+  END LOOP  ;
+  CLOSE c_empleados; -- Cerrar el cursor
+END;
+/
+
+
+
+--Atributos de los cursores
+-- Son propiedades que proporcionan información sobre el estado del cursor.
+-- Algunos atributos comunes son:   
+/*
+  %ISOPEN: Indica si el cursor está abierto (TRUE o FALSE).
+  %FOUND: Indica si la última operación de recuperación devolvió una fila (TRUE o FALSE).
+  %NOTFOUND: Indica si la última operación de recuperación no devolvió ninguna fila (TRUE o FALSE).
+  %ROWCOUNT: Devuelve el número de filas recuperadas hasta el momento.
+*/  
+
+
+-- Ejemplos de uso de atributos de cursores:
+set serveroutput on;
+DECLARE
+  CURSOR c_empleados IS
+    SELECT employee_id, first_name FROM employees;
+  v_employee_id employees.employee_id%TYPE;
+  v_first_name employees.first_name%TYPE;
+BEGIN
+  OPEN c_empleados;
+  
+  IF c_empleados%ISOPEN THEN
+     DBMS_OUTPUT.PUT_LINE('Cursor abierto: TRUE');
+  ELSE
+     DBMS_OUTPUT.PUT_LINE('Cursor abierto: FALSE');
+  END IF;
+  
+  LOOP    
+    FETCH c_empleados INTO v_employee_id, v_first_name;
+    EXIT WHEN c_empleados%NOTFOUND;
+    DBMS_OUTPUT.PUT_LINE('ID: ' || v_employee_id || ', Name: ' || v_first_name);
+  END LOOP;   
+  DBMS_OUTPUT.PUT_LINE('Filas recuperadas: ' || c_empleados%ROWCOUNT);
+  CLOSE c_empleados;
+  
+    IF c_empleados%ISOPEN THEN
+     DBMS_OUTPUT.PUT_LINE('Cursor abierto: TRUE');
+  ELSE
+     DBMS_OUTPUT.PUT_LINE('Cursor abierto: FALSE');
+  END IF;
+  --DBMS_OUTPUT.PUT_LINE('Cursor abierto después de cerrar: ' || c_empleados%ISOPEN);
+END;  
+/
+
+
+-- Ciclo de vida de un cursor
+-- Declaración: Se define el cursor con la consulta SQL.
+-- Apertura: Se abre el cursor para ejecutar la consulta y preparar el conjunto de resultados.
+-- Recuperación: Se recuperan las filas del conjunto de resultados utilizando FETCH.
+-- Cierre: Se cierra el cursor para liberar los recursos asociados. 
+
+
+-- Crear un cursor
+
+-- En este ejemplo, se declara un cursor para seleccionar todas las filas de la tabla REGIONS, luego se abre el cursor, se recuperan dos filas y se imprimen los valores de REGION_ID, y finalmente se cierra el cursor.
+-- pero se puede recuperar todas las filas, pero en este ejemplo solo se recuperan dos para mostrar el uso del cursor y sus atributos.
+-- Si se intenta recuperar una fila después de que el cursor ha devuelto todas las filas, el atributo %NOTFOUND se volverá TRUE, lo que indica que no hay más filas para recuperar.
+
+set serveroutput;
+DECLARE
+  CURSOR C1 IS SELECT * FROM REGIONS;
+  V1 REGIONS%ROWTYPE;
+BEGIN
+  OPEN C1;
+  FETCH C1 INTO  V1;
+  DBMS_OUTPUT.PUT_LINE(V1.REGION_ID);
+  FETCH C1 INTO  V1;
+  DBMS_OUTPUT.PUT_LINE(V1.REGION_ID);
+  CLOSE C1;
+END;
+/
+
+
+-- Reccorrer un cursor con el bucle loop
+-- En este ejemplo, se declara un cursor para seleccionar todas las filas de la tabla REGIONS, luego se abre el cursor y se utiliza un bucle LOOP para recuperar cada fila una por una. Dentro del bucle, se imprime el valor de REGION_NAME para cada fila recuperada. El bucle continúa hasta que el atributo %NOTFOUND del cursor se vuelve TRUE, lo que indica que no hay más filas para recuperar. Finalmente, se cierra el cursor.
+-- Este es un patrón común para recorrer los resultados de un cursor explícito en PL/SQL.
+-- Si se intenta recuperar una fila después de que el cursor ha devuelto todas las filas, el atributo %NOTFOUND se volverá TRUE, lo que indica que no hay más filas para recuperar.
+
+
+
+set serveroutput;
+DECLARE
+  CURSOR C1 IS SELECT * FROM REGIONS;
+  V1 REGIONS%ROWTYPE;
+BEGIN
+  OPEN C1;
+  LOOP
+      FETCH C1 INTO  V1;
+      EXIT WHEN C1%NOTFOUND;
+      DBMS_OUTPUT.PUT_LINE(V1.REGION_NAME);
+  END LOOP;
+  CLOSE C1;
+END;
+/
+
+
+-- Recorrer cursor con FOR
+-- En este ejemplo, se declara un cursor para seleccionar todas las filas de la tabla REGIONS y se utiliza un bucle FOR para recorrer cada fila del cursor. Dentro del bucle, se imprime el valor de REGION_NAME para cada fila recuperada. El bucle FOR maneja automáticamente la apertura, recuperación y cierre del cursor, lo que simplifica el código y reduce la posibilidad de errores relacionados con el manejo manual del cursor.
+-- Este es un patrón común para recorrer los resultados de un cursor explícito en PL/SQL  
+-- Si se intenta recuperar una fila después de que el cursor ha devuelto todas las filas, el bucle FOR terminará automáticamente, ya que el cursor se cierra al finalizar el recorrido.
+-- Todos los comandos estan de forma implicita, es decir, no se necesita abrir, recuperar o cerrar el cursor, el bucle FOR se encarga de todo eso automáticamente.
+
+
+set serveroutput;
+DECLARE
+  CURSOR C1 IS SELECT * FROM REGIONS;
+  V1 REGIONS%ROWTYPE;
+BEGIN
+  OPEN C1;
+  LOOP
+      FETCH C1 INTO  V1;
+      EXIT WHEN C1%NOTFOUND;
+      DBMS_OUTPUT.PUT_LINE(V1.REGION_NAME);
+  END LOOP;
+  CLOSE C1;
+  ----------------------
+  ---BUCLE FOR
+  FOR i IN C1 LOOP
+    DBMS_OUTPUT.PUT_LINE(i.REGION_NAME);
+  END LOOP;
+END;
+/
+
+
+
+-- Recorrer cursor con FOR sin declarar el cursor
+-- En este ejemplo, se utiliza un bucle FOR para recorrer directamente el
+--resultado de una consulta SQL sin declarar un cursor explícito. El bucle FOR maneja automáticamente la apertura, recuperación y
+--cierre del cursor implícito generado por la consulta SQL. Dentro del bucle, se imprime el valor de REGION_NAME para cada fila recuperada. Este enfoque es más conciso y se utiliza comúnmente cuando no se necesita un control detallado sobre el cursor.
+
+set serveroutput;
+BEGIN
+  FOR i IN (SELECT * FROM REGIONS) LOOP
+    DBMS_OUTPUT.PUT_LINE(i.REGION_NAME);
+  END LOOP;
+END;
+/
+
+
+
+
+-- Cursores con parametros
+
+-- En este ejemplo, se declara un cursor con un parámetro de entrada (SAL) que se utiliza para filtrar los resultados de la consulta SQL. El cursor selecciona todas las filas de la tabla EMPLOYEES donde el salario es mayor que el valor del parámetro SAL. Luego, se abre el cursor pasando un valor específico (10000) para el parámetro SAL y se utiliza un bucle LOOP para recuperar cada fila una por una. Dentro del bucle, se imprime el nombre y el salario de cada empleado que cumple con la condición. El bucle continúa hasta que el atributo %NOTFOUND del cursor se vuelve TRUE, lo que indica que no hay más filas para recuperar. Finalmente, se imprime el número total de empleados encontrados utilizando el atributo %ROWCOUNT del cursor y se cierra el cursor.
+-- Este es un patrón común para utilizar cursores con parámetros en PL/SQL, lo que permite reutilizar el cursor con diferentes valores de entrada para obtener resultados específicos según las necesidades del programa.
+-- Si se intenta recuperar una fila después de que el cursor ha devuelto todas las filas, el atributo %NOTFOUND se volverá TRUE, lo que indica que no hay más filas para recuperar.
+
+set serveroutput;
+DECLARE
+  CURSOR C1(SAL number) IS SELECT * FROM employees
+  where SALARY> SAL;
+  empl EMPLOYEES%ROWTYPE;
+BEGIN
+  OPEN C1(10000);
+  LOOP
+      FETCH C1 INTO  empl;
+      EXIT WHEN C1%NOTFOUND;
+      DBMS_OUTPUT.PUT_LINE(empl.first_name||' '||empl.salary);
+  END LOOP;
+  dbms_output.put_line('He encontrado '||c1%rowcount||' empleados');
+  CLOSE C1;
+END;
+/
+
+
+
+-- Updates, deletes con where current of
+-- Permite realizar operaciones de actualización o eliminación en la fila actual del cursor.
+-- Se utiliza la cláusula WHERE CURRENT OF para referirse a la fila actual del cursor.
+-- En este ejemplo, se declara un cursor para seleccionar todas las filas de la tabla EMPLO
+
+set serveroutput;
+DECLARE
+ empl employees%rowtype;
+  CURSOR cur IS SELECT * FROM employees FOR UPDATE;
+BEGIN
+  OPEN cur;
+  LOOP
+    FETCH cur INTO empl;
+    EXIT   WHEN cur%notfound;
+    IF EMPL.COMMISSION_PCT IS NOT NULL THEN
+       UPDATE employees SET SALARY=SALARY*1.10 WHERE CURRENT OF cur;
+    ELSE
+        UPDATE employees SET SALARY=SALARY*1.15 WHERE CURRENT OF cur;
+    END IF;
+  END LOOP;
+ 
+  CLOSE cur;
+END;
+
+/
+
+-- Procedimientos y funciones almacenadas
+
+-- PROCEDURES
+-- FUNCTIONS
+-- PACKAGES
+-- TRIGGERS
+
+
+/* 
+   1- CREAR EL OBJETO
+       CODIGO FUENTE
+       CODIGO PSEUDO-COMPILADO
+   2- INVOCAR EN CUALQUIER MOMENTO (SQL)
+   */
 
