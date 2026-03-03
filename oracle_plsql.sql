@@ -9,7 +9,7 @@ END;
 -- Visualizar salida por pantalla
 -- Se utiliza el paquete DBMS_OUTPUT para mostrar mensajes en la consola.
 -- Asegúrate de habilitar la salida en tu entorno de desarrollo (por ejemplo, SQL*Plus o SQL Developer).
-SET SERVEROUTPUT ON;;
+SET SERVEROUTPUT ON;
 BEGIN
   DBMS_OUTPUT.PUT_LINE('Hola, Mundo!');
   DBMS_OUTPUT.PUT_LINE(100 + 200);
@@ -83,7 +83,7 @@ END;
         v_activo BOOLEAN := TRUE;
 */
 
-SET SERVEROUTPUT ON;;
+SET SERVEROUTPUT ON;
 DECLARE 
   NAME VARCHAR2(100);
   LASTNAME VARCHAR2(50);
@@ -250,7 +250,7 @@ END;
 -- Se puede asignar explícitamente a una variable para indicar que no tiene valor.  
 
 
-SET SERVEROUTPUT ON;;
+SET SERVEROUTPUT ON;
 DECLARE     
   v_pi CONSTANT NUMBER := 3.1416; -- Declaración de una constante, se debe inicializar al declararla sino da error
   v_nombre VARCHAR2(50);          -- Declaración de una variable  
@@ -271,7 +271,7 @@ END;
 -- Son variables que pueden tomar los valores TRUE, FALSE o NULL.
 -- Se utilizan para controlar el flujo de ejecución en estructuras condicionales y bucles.  
 
-SET SERVEROUTPUT ON;;
+SET SERVEROUTPUT ON;
 DECLARE 
   v_es_mayor BOOLEAN; -- Declaración de una variable booleana
   v_edad NUMBER := 20; -- Declaración de una variable numérica    
@@ -290,7 +290,7 @@ END;
 -- Se utiliza para declarar una variable con el mismo tipo de dato que una columna de una tabla o una variable existente.
 -- Esto ayuda a mantener la consistencia de tipos de datos y facilita el mantenimiento del código.
 
-SET SERVEROUTPUT ON;;
+SET SERVEROUTPUT ON;
 DECLARE 
   v_salario employees.salary%TYPE; -- Declaración de una variable con el mismo tipo que la columna salario de la tabla empleados 
 BEGIN
@@ -323,7 +323,7 @@ END;
          
 */
 
-SET SERVEROUTPUT ON;;
+SET SERVEROUTPUT ON;
 DECLARE 
   v_a NUMBER := 10; 
   v_b NUMBER := 20; 
@@ -375,7 +375,7 @@ END;
 -- Comentario de una sola línea
 
 -- Este es un comentario de una sola línea
-SET SERVEROUTPUT ON;;
+SET SERVEROUTPUT ON;
 DECLARE 
   v_pi CONSTANT NUMBER := 3.1416; -- Declaración de una constante, se debe inicializar al declararla sino da error
   v_nombre VARCHAR2(50);          -- Declaración de una variable  
@@ -402,7 +402,7 @@ END;
 -- Son bloques PL/SQL que se encuentran dentro de otros bloques PL/SQL.
 -- Permiten organizar el código en secciones lógicas y manejar el alcance de las variables. 
 
-SET SERVEROUTPUT ON;;
+SET SERVEROUTPUT ON;
 DECLARE
 BEGIN
     dbms_output.put_line('EN EL PRIMER BLOQUE');
@@ -425,7 +425,7 @@ END;
 -- en este caso , toma la variable x del bloque hijo.
 
 
-SET SERVEROUTPUT ON;;
+SET SERVEROUTPUT ON;
 
 DECLARE
     x   NUMBER := 20;  --GLOBAL
@@ -529,7 +529,7 @@ END;
 -- Si no, ejecuta algo
 
 
-SET SERVEROUTPUT ON;;
+SET SERVEROUTPUT ON;
 DECLARE
     x   NUMBER := 20;
 BEGIN
@@ -621,7 +621,7 @@ END;
 -- Se le debe indicar una condicion de salida
 
 -- Se utiliza cuando no se conoce el numero de iteraciones
-SET SERVEROUTPUT ON;;
+SET SERVEROUTPUT ON;
 DECLARE
    X NUMBER:=1;
 BEGIN
@@ -645,7 +645,7 @@ END;
 -- Loops dentro de un loops
 
 -- Se colocan etiquetas para identificarlas
-SET SERVEROUTPUT ON;;
+SET SERVEROUTPUT ON;
 DECLARE
   s  PLS_INTEGER := 0;
   i  PLS_INTEGER := 0;
@@ -682,7 +682,7 @@ END;
 -- Seguir con la siguiente iteracion
 
 
-SET SERVEROUTPUT ON;;
+SET SERVEROUTPUT ON;
 DECLARE
   x NUMBER := 0;
 BEGIN
@@ -1474,4 +1474,235 @@ END;
        CODIGO PSEUDO-COMPILADO
    2- INVOCAR EN CUALQUIER MOMENTO (SQL)
    */
+
+-- crear un procedimiento 
+/*CREATE OR REPLACE PROCEDURE PR1
+IS 
+   X NUMBER:=10;
+BEGIN
+   DBMS_OUTPUT.PUT_LINE(X);
+END;*/
+
+
+-- Ejecutar o invocar el procedimiento
+
+set serveroutput on;
+begin 
+    pr1; 
+end;
+/
+
+
+-- Otra forma de ejecutar
+execute pr1;
+
+-- Ver los objetos de la base de datos
+
+-- USER_PROCEDURES
+-- Muestra información sobre los procedimientos almacenados 
+-- definidos por el usuario en el esquema actual.
+
+SELECT * FROM USER_PROCEDURES;  
+
+-- USER_SOURCE
+-- Muestra el código fuente de los objetos almacenados 
+-- (procedimientos, funciones, paquetes, etc.) 
+--definidos por el usuario en el esquema actual.
+
+SELECT * FROM USER_SOURCE
+
+
+--USER_OBJECTS
+-- Muestra información sobre todos los objetos 
+-- (procedimientos, funciones, paquetes, tablas, vistas, etc.) 
+--definidos por el usuario en el esquema actual.
+SELECT * FROM USER_OBJECTS 
+WHERE OBJECT_TYPE='PROCEDURE';
+
+SELECT OBJECT_TYPE,COUNT(*) FROM USER_OBJECTS
+GROUP BY OBJECT_TYPE;
+
+SELECT * FROM USER_SOURCE
+WHERE NAME='PR1';
+
+SELECT TEXT FROM USER_SOURCE
+WHERE NAME='PR1';
+
+
+-- Parametros de funciones y procedimientos
+-- IN: El valor se pasa al procedimiento o función, pero no se puede modificar dentro del procedimiento o función.
+-- OUT: El valor se devuelve al programa que llamó al procedimiento o función, pero no se puede pasar un valor al procedimiento o función.
+-- IN OUT: El valor se pasa al procedimiento o función y también se devuelve al programa que llamó al procedimiento o función, lo que permite modificar el valor dentro del procedimiento o función.
+
+/*CREATE OR REPLACE PROCEDURE CALC_TAX 
+(EMPL IN EMPLOYEES.EMPLOYEE_ID%TYPE,
+    T1 IN NUMBER)
+IS
+  TAX NUMBER:=0;
+  SAL NUMBER:=0;
+BEGIN
+   IF T1 <0 OR T1 > 60 THEN 
+      RAISE_APPLICATION_ERROR(-20000,'EL PORCENTAJE DEBE ESTAR ENTRE 0 Y 60');
+    END IF;
+   SELECT SALARY INTO SAL FROM EMPLOYEES    WHERE EMPLOYEE_ID=EMPL;
+   --T1:=0;
+   TAX:=SAL*T1/100;
+   DBMS_OUTPUT.PUT_line('SALARY:'||SAL);
+   DBMS_OUTPUT.PUT_line('TAX:'||TAX);
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_line('NO EXISTE EL EMPLEADO');
+END;
+/
+*/
+
+
+-- Invocar el SP
+set serveroutput on
+DECLARE
+  A NUMBER;
+  B NUMBER;
+begin
+  A:=120;
+  B:=5;
+  calc_tax(A,B);
+end;
+/
+
+-- Parametros tipo OUT
+/*
+create or replace PROCEDURE CALC_TAX_OUT 
+(EMPL IN EMPLOYEES.EMPLOYEE_ID%TYPE,
+    T1 IN NUMBER,
+    R1 OUT NUMBER)
+IS
+  --TAX NUMBER:=0;
+  SAL NUMBER:=0;
+BEGIN
+   IF T1 <0 OR T1 > 60 THEN 
+      RAISE_APPLICATION_ERROR(-20000,'EL PORCENTAJE DEBE ESTAR ENTRE 0 Y 60');
+    END IF;    
+   SELECT SALARY INTO SAL FROM EMPLOYEES    WHERE EMPLOYEE_ID=EMPL;
+   --T1:=0;
+   R1:=SAL*T1/100;
+   DBMS_OUTPUT.PUT_line('SALARY:'||SAL);
+  -- DBMS_OUTPUT.PUT_line('TAX:'||TAX);
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+       DBMS_OUTPUT.PUT_line('NO EXISTE EL EMPLEADO');
+END;
+/*/
+
+
+set serveroutput on
+DECLARE
+  A NUMBER;
+  B NUMBER;
+  R NUMBER;
+begin
+  A:=120;
+  B:=10;
+  R:=0;
+ CALC_TAX_OUT(A,B,R);
+ DBMS_OUTPUT.PUT_LINE('R='||R);
+end;
+/
+
+-- Parametros tipo IN-OUT
+/*
+create or replace PROCEDURE CALC_TAX_IN_OUT 
+(EMPL IN EMPLOYEES.EMPLOYEE_ID%TYPE,
+    T1 IN OUT NUMBER
+   )
+IS
+  --TAX NUMBER:=0;
+  SAL NUMBER:=0;
+BEGIN
+   IF T1 <0 OR T1 > 60 THEN 
+      RAISE_APPLICATION_ERROR(-20000,'EL PORCENTAJE DEBE ESTAR ENTRE 0 Y 60');
+    END IF;    
+   SELECT SALARY INTO SAL FROM EMPLOYEES    WHERE EMPLOYEE_ID=EMPL;
+   --T1:=0;
+   DBMS_OUTPUT.PUT_LINE('T1='||T1);
+   T1:=SAL*T1/100;
+   DBMS_OUTPUT.PUT_line('SALARY:'||SAL);
+  -- DBMS_OUTPUT.PUT_line('TAX:'||TAX);
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+       DBMS_OUTPUT.PUT_line('NO EXISTE EL EMPLEADO');
+END; */
+
+
+
+set serveroutput on
+DECLARE
+  A NUMBER;
+  B NUMBER;
+  R NUMBER;
+begin
+  A:=120;
+  B:=10;
+ -- R:=1000;
+ CALC_TAX_IN_OUT(A,B);
+ DBMS_OUTPUT.PUT_LINE('B='||B);
+end;
+/
+
+-- Funciones
+-- Las funciones son similares a los procedimientos, pero tienen algunas diferencias clave:
+-- Las funciones deben devolver un valor utilizando la cláusula RETURN, mientras que los procedimientos no devuelven valores.
+-- Las funciones se pueden utilizar en expresiones SQL, mientras que los procedimientos no se pueden utilizar en expresiones SQL.
+
+/*CREATE OR REPLACE FUNCTION CALC_TAX_F
+    (EMPL IN EMPLOYEES.EMPLOYEE_ID%TYPE,
+      T1 IN NUMBER)
+RETURN NUMBER
+IS
+  TAX NUMBER:=0;
+  SAL NUMBER:=0;
+BEGIN
+   IF T1 <0 OR T1 > 60 THEN 
+      RAISE_APPLICATION_ERROR(-20000,'EL PORCENTAJE DEBE ESTAR ENTRE 0 Y 60');
+    END IF;
+   SELECT SALARY INTO SAL FROM EMPLOYEES WHERE EMPLOYEE_ID=EMPL;
+   --T1:=0;
+   TAX:=SAL*T1/100;
+   RETURN TAX;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+       DBMS_OUTPUT.PUT_line('NO EXISTE EL EMPLEADO');
+END; */
+
+set serveroutput on
+DECLARE
+  A NUMBER;
+  B NUMBER;
+  R NUMBER;
+begin
+  A:=120;
+  B:=10;
+  R:=CALC_TAX_F(A,B);
+ DBMS_OUTPUT.PUT_LINE('R='||R);
+end;
+/
+
+
+-- Funciones en comandos SQL
+-- Las funciones pueden ser utilizadas en comandos SQL, como SELECT, WHERE, etc., lo que
+-- permite realizar cálculos o transformaciones directamente en la consulta SQL.
+-- En este ejemplo, se utiliza la función CALC_TAX_F en una consulta SQL para calcular el impuesto para cada empleado en la tabla EMPLOYEES. La función se llama para cada
+
+--empleado, pasando su EMPLOYEE_ID y un valor fijo de 10 para el porcentaje de impuesto. El resultado se muestra en la columna TAX_CALCULATED junto con el nombre del empleado.
+-- Este es un ejemplo común de cómo las funciones pueden ser integradas en consultas SQL para realizar
+--cálculos dinámicos basados en los datos de la tabla.    
+
+set serveroutput on;
+BEGIN
+  FOR rec IN (SELECT first_name, CALC_TAX_F(employee_id, 10) AS tax_calculated
+                FROM employees) LOOP        
+    DBMS_OUTPUT.PUT_LINE('Employee: ' || rec.first_name || ', Tax Calculated: ' || rec.tax_calculated);
+  END LOOP;
+END;
+/
+
 
