@@ -1946,6 +1946,208 @@ end;
 /
 
 
+-- Trigggers
+-- Un trigger es un bloque de código PL/SQL que se ejecuta automáticamente 
+--en respuesta a ciertos eventos en la base de datos, como inserciones, actualizaciones o eliminaciones en una tabla
+
+
+
+-- Tipos y eventos en los triggers
+-- BEFORE: El trigger se ejecuta antes de que ocurra el evento (INSERT, UPDATE, DELETE).
+-- AFTER: El trigger se ejecuta después de que ocurra el evento.
+-- INSTEAD OF: El trigger se ejecuta en lugar del evento, comúnmente utilizado
+
+-- para vistas.
+-- ON: Especifica la tabla o vista a la que se aplica el trigger.
+-- FOR EACH ROW: Indica que el trigger se ejecuta para cada fila afectada por el evento, en lugar de ejecutarse una sola vez por la operación completa.
+-- WHEN: Permite especificar una condición para que el trigger se ejecute solo cuando se cumpla esa condición.
+
+-- Tipos              Eventos           Filas Afectadas
+-- BEFORE             INSERT            FOR EACH ROW (Se dispara por cada fila), STATEMENT (Se dispara una sola vez por la operación completa)
+-- BEFORE             UPDATE            FOR EACH ROW (Se dispara por cada fila), STATEMENT (Se dispara una sola vez por la operación completa)
+-- BEFORE             DELETE            FOR EACH ROW (Se dispara por cada fila), STATEMENT (Se dispara una sola vez por la operación completa)
+-- AFTER              INSERT            FOR EACH ROW (Se dispara por cada fila), STATEMENT (Se dispara una sola vez por la operación completa)
+-- AFTER              UPDATE            FOR EACH ROW (Se dispara por cada fila), STATEMENT (Se dispara una sola vez por la operación completa)
+-- AFTER              DELETE            FOR EACH ROW (Se dispara por cada fila), STATEMENT (Se dispara una sola vez por la operación completa)
+-- INSTEAD OF         INSERT            FOR EACH ROW (Se dispara por cada fila), STATEMENT (Se dispara una sola vez por la operación completa)
+-- INSTEAD OF         UPDATE            FOR EACH ROW (Se dispara por cada fila), STATEMENT (Se dispara una sola vez por la operación completa)
+-- INSTEAD OF         DELETE            FOR EACH ROW (Se dispara por cada fila), STATEMENT (Se dispara una sola vez por la operación completa)
+
+
+
+
+-- Crear un trigger
+
+
+-- Crear la tabla log_table con los campos (log_column VARCHAR2(200), user_name VARCHAR2(30))
+CREATE TABLE LOG_TABLE (
+  log_column VARCHAR2(200),
+  user_name VARCHAR2(30)
+);
+
+-- Crear el trigger que registra las inserciones en la tabla REGIONS
+CREATE OR REPLACE TRIGGER INS_EMPL 
+AFTER INSERT ON REGIONS 
+BEGIN
+  INSERT INTO LOG_TABLE VALUES('INSERCION EN LA TABLA REGIONS',USER);
+END;
+/
+
+insert into regions values(1001, 'REGION2');
+COMMIT;
+
+select * from regions;
+
+select * from log_table;
+
+
+-- Impedir inserciones en la tabla REGIONS
+
+-- El trigger se ejecuta antes de que ocurra la inserción en la tabla REGIONS.
+-- Si el usuario que intenta realizar la inserción no es 'HR', se lanza un error utilizando 
+-- RAISE_APPLICATION_ERROR, lo que impide que la inserción se complete. Si el usuario es 'HR', el trigger permite que la inserción se realice normalmente.
+
+CREATE OR REPLACE TRIGGER TR1_REGION 
+BEFORE INSERT 
+ON REGIONS 
+BEGIN
+  IF USER <>'HR' THEN
+    RAISE_APPLICATION_ERROR(-20000,'SOLO HR PUEDE TRABAJAR EN REGIONS');
+  END IF;
+  
+END;
+/
+
+
+-- Crear trigger con eventos multiples
+
+CREATE OR REPLACE TRIGGER TR1_REGION 
+BEFORE INSERT OR UPDATE OF REGION_NAME OR DELETE
+ON REGIONS 
+BEGIN
+  IF USER <>'HR' THEN
+    RAISE_APPLICATION_ERROR(-20000,'SOLO HR PUEDE TRABAJAR EN REGIONS');
+  END IF;
+  
+END;
+/
+
+
+-- Controlar el tipo de evento
+
+
+create or replace TRIGGER TR1_REGION 
+BEFORE INSERT OR UPDATE OR DELETE
+ON REGIONS 
+BEGIN
+   
+   IF INSERTING THEN
+     INSERT INTO LOG_TABLE VALUES ('INSERCION',USER);
+   END IF;
+   IF UPDATING('REGION_NAME') THEN
+      INSERT INTO LOG_TABLE VALUES ('UPDATE DE REGION_NAME', USER);
+   END IF;
+   IF UPDATING('REGION_ID') THEN
+      INSERT INTO LOG_TABLE VALUES ('UPDATE DE REGION_ID', USER);
+   END IF;
+   IF DELETING  THEN
+      INSERT INTO LOG_TABLE VALUES ('DELETE', USER);
+   END IF;
+   
+  /*IF USER <>'HR' THEN
+    RAISE_APPLICATION_ERROR(-20000,'SOLO HR PUEDE TRABAJAR EN REGIONS');
+  END IF;*/
+  
+END;
+/
+
+
+-- TRiggers de tipo row
+-- En este tipo de trigger, se pueden utilizar las pseudorecords 
+--:NEW y :OLD para acceder a los valores de las filas afectadas por el evento.
+-- :NEW se utiliza para acceder a los valores de la fila después de la operación (INSERT  o UPDATE), mientras que 
+-- :OLD se utiliza para acceder a los valores de la fila antes de la operación (UPDATE o DELETE).  
+
+
+-- los triggers de tipo row se diferencia de los triggers de tipo statement 
+-- en que se ejecutan una vez por cada fila afectada por el evento, 
+-- mientras que los triggers de tipo statement se ejecutan una sola 
+--vez por la operación completa, independientemente del número de filas afectadas.  
+
+-- Crear un trigger de tipo row
+
+create or replace TRIGGER TR1_REGION 
+BEFORE INSERT OR UPDATE OR DELETE
+ON REGIONS 
+FOR EACH ROW
+BEGIN 
+   IF INSERTING THEN
+    :NEW.REGION_NAME:=UPPER(:NEW.REGION_NAME);
+     INSERT INTO LOG_TABLE VALUES ('INSERCION ' || :NEW.REGION_ID,USER);
+   END IF;
+   IF UPDATING('REGION_NAME') THEN
+      :NEW.REGION_NAME:=UPPER(:NEW.REGION_NAME);
+      INSERT INTO LOG_TABLE VALUES ('UPDATE DE REGION_NAME ' || :NEW.REGION_ID, USER);
+   END IF;
+   IF UPDATING('REGION_ID') THEN
+      INSERT INTO LOG_TABLE VALUES ('UPDATE DE REGION_ID ' || :NEW.REGION_ID, USER);
+   END IF;
+   IF DELETING  THEN
+      INSERT INTO LOG_TABLE VALUES ('DELETE ' || :NEW.REGION_ID, USER);
+   END IF;
+   
+  /*IF USER <>'HR' THEN
+    RAISE_APPLICATION_ERROR(-20000,'SOLO HR PUEDE TRABAJAR EN REGIONS');
+  END IF;*/
+  
+END;
+/
+
+-- Asi configuramos para guardar registros de auditoria en la base de datos
+AUDIT INSERT, UPDATE, DELETE ON regions;
+
+-- ver los cambios
+select * from USER_AUDIT_TRAIL;
+
+-- COn esto podemos ver las versiones de la filas en el tiempo
+SELECT *
+FROM regions
+VERSIONS BETWEEN TIMESTAMP
+SYSTIMESTAMP - INTERVAL '10' MINUTE
+AND SYSTIMESTAMP;
+
+
+-- La clausula WHEN en los triggers
+-- Permite especificar una condición para que el trigger se 
+-- ejecute solo cuando se cumpla
+
+
+create or replace TRIGGER TR1_REGION 
+BEFORE INSERT OR UPDATE OR DELETE
+ON REGIONS 
+FOR EACH ROW
+WHEN (NEW.REGION_ID> 1000)
+BEGIN 
+   IF INSERTING THEN
+    :NEW.REGION_NAME:=UPPER(:NEW.REGION_NAME);
+     INSERT INTO LOG_TABLE VALUES ('INSERCION',USER);
+   END IF;
+   IF UPDATING('REGION_NAME') THEN
+      :NEW.REGION_NAME:=UPPER(:NEW.REGION_NAME);
+      INSERT INTO LOG_TABLE VALUES ('UPDATE DE REGION_NAME', USER);
+   END IF;
+   IF UPDATING('REGION_ID') THEN
+      INSERT INTO LOG_TABLE VALUES ('UPDATE DE REGION_ID', USER);
+   END IF;
+   IF DELETING  THEN
+      INSERT INTO LOG_TABLE VALUES ('DELETE', USER);
+   END IF;
+   
+  /*IF USER <>'HR' THEN
+    RAISE_APPLICATION_ERROR(-20000,'SOLO HR PUEDE TRABAJAR EN REGIONS');
+  END IF;*/
+  
+END;
 
 
 
