@@ -1326,7 +1326,7 @@ END;
 -- pero se puede recuperar todas las filas, pero en este ejemplo solo se recuperan dos para mostrar el uso del cursor y sus atributos.
 -- Si se intenta recuperar una fila después de que el cursor ha devuelto todas las filas, el atributo %NOTFOUND se volverá TRUE, lo que indica que no hay más filas para recuperar.
 
-set serveroutput;
+set serveroutput on;
 DECLARE
   CURSOR C1 IS SELECT * FROM REGIONS;
   V1 REGIONS%ROWTYPE;
@@ -1348,7 +1348,7 @@ END;
 
 
 
-set serveroutput;
+set serveroutput on;
 DECLARE
   CURSOR C1 IS SELECT * FROM REGIONS;
   V1 REGIONS%ROWTYPE;
@@ -1371,7 +1371,7 @@ END;
 -- Todos los comandos estan de forma implicita, es decir, no se necesita abrir, recuperar o cerrar el cursor, el bucle FOR se encarga de todo eso automáticamente.
 
 
-set serveroutput;
+set serveroutput on;
 DECLARE
   CURSOR C1 IS SELECT * FROM REGIONS;
   V1 REGIONS%ROWTYPE;
@@ -1398,7 +1398,7 @@ END;
 --resultado de una consulta SQL sin declarar un cursor explícito. El bucle FOR maneja automáticamente la apertura, recuperación y
 --cierre del cursor implícito generado por la consulta SQL. Dentro del bucle, se imprime el valor de REGION_NAME para cada fila recuperada. Este enfoque es más conciso y se utiliza comúnmente cuando no se necesita un control detallado sobre el cursor.
 
-set serveroutput;
+set serveroutput on;
 BEGIN
   FOR i IN (SELECT * FROM REGIONS) LOOP
     DBMS_OUTPUT.PUT_LINE(i.REGION_NAME);
@@ -1415,7 +1415,7 @@ END;
 -- Este es un patrón común para utilizar cursores con parámetros en PL/SQL, lo que permite reutilizar el cursor con diferentes valores de entrada para obtener resultados específicos según las necesidades del programa.
 -- Si se intenta recuperar una fila después de que el cursor ha devuelto todas las filas, el atributo %NOTFOUND se volverá TRUE, lo que indica que no hay más filas para recuperar.
 
-set serveroutput;
+set serveroutput on;
 DECLARE
   CURSOR C1(SAL number) IS SELECT * FROM employees
   where SALARY> SAL;
@@ -1439,7 +1439,7 @@ END;
 -- Se utiliza la cláusula WHERE CURRENT OF para referirse a la fila actual del cursor.
 -- En este ejemplo, se declara un cursor para seleccionar todas las filas de la tabla EMPLO
 
-set serveroutput;
+set serveroutput on;
 DECLARE
  empl employees%rowtype;
   CURSOR cur IS SELECT * FROM employees FOR UPDATE;
@@ -1509,7 +1509,7 @@ SELECT * FROM USER_PROCEDURES;
 -- (procedimientos, funciones, paquetes, etc.) 
 --definidos por el usuario en el esquema actual.
 
-SELECT * FROM USER_SOURCE
+SELECT * FROM USER_SOURCE;
 
 
 --USER_OBJECTS
@@ -1673,7 +1673,7 @@ EXCEPTION
        DBMS_OUTPUT.PUT_line('NO EXISTE EL EMPLEADO');
 END; */
 
-set serveroutput on
+set serveroutput on;
 DECLARE
   A NUMBER;
   B NUMBER;
@@ -1704,5 +1704,249 @@ BEGIN
   END LOOP;
 END;
 /
+
+
+
+
+
+-- Packages
+-- Un package es un contenedor lógico que agrupa procedimientos, funciones, variables, tipos de datos y otros objetos relacionados.
+-- Los packages permiten organizar el código de manera modular y facilitan la reutilaización de código.
+
+
+-- Tiene dos componentes, el specification y el body  
+-- Specification: Es la parte pública del package, donde se declaran los objetos que estarán disponibles para otros programas.
+-- Aquí se definen los procedimientos, funciones, variables y tipos de datos que se pueden utilizar fuera del package.
+
+-- Body: Es la parte privada del package, donde se implementan los objetos declarados en    la specification. 
+--Aquí se escribe el código que realiza las operaciones definidas en los procedimientos y funciones, y se pueden declarar variables 
+--y tipos de datos que solo son accesibles dentro del package.
+
+
+-- Crear las especificacions de un paquete
+CREATE OR REPLACE PACKAGE PACK1
+IS
+   V1 NUMBER;
+   V2 VARCHAR2(100);
+END;
+/
+
+
+
+-- Ejecutar el paquete
+SET SERVEROUTPUT ON
+BEGIN
+ PACK1.V1:=100;
+ PACK1.V2:='AAAAA';
+ DBMS_OUTPUT.PUT_LINE(PACK1.V1);
+ DBMS_OUTPUT.PUT_LINE(PACK1.V2);
+
+END;
+/
+
+-- Ambito de las variables
+-- Las variables que se declaran en el specification de un package son globales y pueden ser accedidas desde cualquier parte del sistema,
+-- incluyendo otros packages y programas PL/SQL. En la session,  hasta que el usuario se sale de la session
+
+CREATE OR REPLACE PACKAGE PACK1
+IS
+   V1 NUMBER:=10;
+   V2 VARCHAR2(100);
+END;
+/
+
+
+SET SERVEROUTPUT ON
+BEGIN
+ PACK1.V1:=PACK1.V1+10;
+ DBMS_OUTPUT.PUT_LINE(PACK1.V1);
+END;
+/
+
+-- Crear el body del paquete
+CREATE OR REPLACE PACKAGE PACK1
+IS
+  PROCEDURE CONVERT (NAME VARCHAR2, CONVERSION_TYPE CHAR);
+END;
+/
+
+
+-- En el cuerpo del paquete, si tengo funciones que no estan delcaradas en el spec
+-- No seran publicas, solo sera visible dentro del paquete
+-- Esas funciones se deben declarar al inicio del body del paquete
+
+
+CREATE OR REPLACE PACKAGE BODY PACK1
+IS
+FUNCTION UP(NAME VARCHAR2)
+RETURN VARCHAR2 
+IS
+BEGIN
+    RETURN UPPER(NAME);
+END UP;
+
+FUNCTION DO(NAME VARCHAR2)
+RETURN VARCHAR2 
+IS
+BEGIN
+    RETURN LOWER(NAME);
+END DO;
+
+PROCEDURE CONVERT (NAME VARCHAR2, CONVERSION_TYPE CHAR)
+ IS
+ BEGIN
+    IF CONVERSION_TYPE='U' THEN
+       DBMS_OUTPUT.PUT_LINE(UP(NAME));
+    ELSIF CONVERSION_TYPE='L' THEN
+       DBMS_OUTPUT.PUT_LINE(DO(NAME));
+    ELSE
+       DBMS_OUTPUT.PUT_LINE('EL PARAMETRO DEBE SER U o L');
+   END IF;
+END CONVERT;
+
+END PACK1;
+/
+
+
+SET SERVEROUTPUT ON
+BEGIN
+ PACK1.CONVERT('aaaa','U');
+ 
+END;
+/
+
+
+-- Usar funciones de un paquete en comandos SQL
+
+SET SERVEROUTPUT ON
+DECLARE
+  V1 VARCHAR2(100);
+BEGIN
+ V1:=PACK1.CONVERT('AAAAA','L');
+ DBMS_OUTPUT.PUT_LINE(V1);
+END;
+/
+
+SELECT
+    first_name,PACK1.CONVERT(FIRST_NAME,'L'),PACK1.CONVERT(LAST_NAME,'U')
+FROM
+    employees;
+
+
+-- Sobre carga de procedimientos
+CREATE OR REPLACE 
+PACKAGE PACK2 AS 
+
+  /* TODO enter package declarations (types, exceptions, methods etc) here */
+  FUNCTION COUNT_EMPLOYEES(ID NUMBER) RETURN NUMBER;
+  FUNCTION COUNT_EMPLOYEES(ID VARCHAR2) RETURN NUMBER;
+END PACK2;
+/
+
+CREATE OR REPLACE
+PACKAGE BODY PACK2 AS
+
+  FUNCTION COUNT_EMPLOYEES(ID NUMBER) RETURN NUMBER AS
+  X NUMBER;
+  BEGIN
+    -- TODO: Implementation required for FUNCTION PACK2.COUNT_EMPLOYEES
+    SELECT COUNT(*) INTO X FROM EMPLOYEES WHERE DEPARTMENT_ID=ID;
+    RETURN X;
+  END COUNT_EMPLOYEES;
+
+  FUNCTION COUNT_EMPLOYEES(ID VARCHAR2) RETURN NUMBER AS
+  X NUMBER;
+  BEGIN
+    -- TODO: Implementation required for FUNCTION PACK2.COUNT_EMPLOYEES
+    SELECT COUNT(*) INTO X FROM EMPLOYEES A, DEPARTMENTS B
+         WHERE DEPARTMENT_NAME=ID
+         AND A.DEPARTMENT_ID=B.DEPARTMENT_ID;
+       
+    RETURN X;
+  END COUNT_EMPLOYEES;
+
+END PACK2;
+
+/
+
+set serveroutput on;
+begin
+
+  dbms_output.put_line(PACK2.COUNT_EMPLOYEES(10));
+  dbms_output.put_line(PACK2.COUNT_EMPLOYEES('IT'));  
+
+end;
+/
+
+
+-- Paquetes predefinidos de oracle
+
+/*
+  DBMS_OUTPUT: Permite mostrar mensajes en la consola de salida.
+  DBMS_SQL: Proporciona funciones para ejecutar sentencias SQL dinámicas.
+  DBMS_RANDOM: Permite generar números aleatorios.
+  DBMS_UTILITY: Proporciona funciones para obtener información del sistema y realizar tareas de utilidad general.
+  DBMS_JOB: Permite programar tareas para que se ejecuten en momentos específicos.
+  DBMS_SCHEDULER: Proporciona una interfaz para programar y administrar tareas en la base de datos.
+  UTL_FILE: Permite leer y escribir archivos en el sistema de archivos del servidor.
+  UTL_MAIL: Permite enviar correos electrónicos desde la base de datos.
+  DBMS_ALERT: Permite crear y administrar alertas para monitorear eventos en la base de datos.
+  DBMS_LOCK: Proporciona funciones para manejar bloqueos en la base de datos. 
+  DBMS_SESSION: Permite obtener información sobre la sesión actual y controlar ciertos aspectos de la sesión.
+  DBMS_APPLICATION_INFO: Permite establecer y recuperar información de la aplicación para la sesión actual.
+  HTTP: Proporciona funciones para realizar solicitudes HTTP desde la base de datos.
+  
+
+*/
+
+
+-- Paquete UTL_FILE
+-- Permite leer y escribir archivos en el sistema de archivos del servidor.
+-- Para usar este paquete, el directorio donde se encuentran los archivos debe estar definido en la
+-- base de datos como un objeto de tipo DIRECTORY, y el usuario debe tener los permisos adecuados para acceder a ese directorio.
+
+-- Permisos
+GRANT CREATE ANY DIRECTORY TO HR;
+GRANT EXECUTE ON SYS.UTL_FILE TO HR;
+
+
+-- Se debe crear un directorio en el sistema operativo del servidor y luego crear un objeto
+-- DIRECTORY en la base de datos que apunte a ese directorio. Por ejemplo,
+-- si el directorio en el sistema operativo es /u01/app/files, se puede crear el objeto DIRECTORY de la siguiente manera:
+--CREATE OR REPLACE DIRECTORY EXERCISES AS '/u01/app/files';  
+
+set serveroutput on
+create or replace PROCEDURE read_file IS
+
+string VARCHAR2(32767); 
+Vfile UTL_FILE.FILE_TYPE; 
+
+BEGIN 
+-- Open FILE
+Vfile := UTL_FILE.FOPEN('EXERCISES','f1.txt','R'); 
+Loop
+    begin
+        --read line
+        UTL_FILE.GET_LINE(Vfile,string); 
+        INSERT INTO F1 VALUES(string);
+     EXCEPTION
+          WHEN NO_DATA_FOUND THEN EXIT; 
+    end;
+end loop;
+-- close file
+UTL_FILE.FCLOSE(Vfile);
+
+END;
+/
+
+begin
+    read_file;
+    commit;
+end;
+/
+
+
+
+
 
 
