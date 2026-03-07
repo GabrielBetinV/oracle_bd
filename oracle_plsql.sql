@@ -2148,9 +2148,213 @@ BEGIN
   END IF;*/
   
 END;
+/
+
+-- Comprobar estado de los triggers
+
+select * from user_triggers
+where trigger_name='TR1_REGION';  
+
+
+
+-- Trabajar triggers en modo comando
+
+-- Desactivar un trigger
+ALTER TRIGGER TR1_REGION DISABLE;
+
+-- Activar un trigger
+ALTER TRIGGER TR1_REGION ENABLE;
+
+-- Compilar un trigger
+ALTER TRIGGER TR1_REGION COMPILE;
+
+-- Eliminar un trigger
+DROP TRIGGER TR1_REGION;
+
+
+-- Triggers tipo compound , compuestos
+-- Un trigger compuesto es un tipo de trigger que puede manejar múltiples eventos (INSERT, UPDATE, DELETE) en una sola definición de trigger. 
+-- Esto permite escribir un código más conciso y organizado, ya que se pueden manejar diferentes eventos relacionados con la misma tabla en un solo bloque de código PL/SQL. 
+-- En un trigger compuesto, se pueden utilizar las pseudorecords :NEW y :OLD para acceder a los valores de las filas afectadas por los eventos,
+--  y se pueden utilizar las condiciones IF para diferenciar el comportamiento según el tipo de evento que se esté manejando    
+
+CREATE OR REPLACE TRIGGER trigger1 
+FOR DELETE OR INSERT OR UPDATE ON regions
+COMPOUND TRIGGER
+    BEFORE STATEMENT IS BEGIN
+        INSERT INTO LOG_TABLE VALUES('BEFORE STATEMENT',USER);
+    END BEFORE STATEMENT;
+    
+    AFTER STATEMENT IS BEGIN
+        INSERT INTO LOG_TABLE VALUES('AFTER STATEMENT',USER);
+    END AFTER STATEMENT;
+    
+    BEFORE EACH ROW IS BEGIN
+        INSERT INTO LOG_TABLE VALUES('BEFORE EACH ROW',USER);
+    END BEFORE EACH ROW;
+   
+   AFTER EACH ROW IS BEGIN
+        INSERT INTO LOG_TABLE VALUES('AFTER EACH ROW',USER);
+    END AFTER EACH ROW;
+END trigger1;
+/
+
+ALTER TRIGGER TR1_REGION DISABLE;
+INSERT INTO REGIONS VALUES(9001,'REGION9001');
+UPDATE REGIONS SET REGION_NAME='AAA';
+COMMIT;
+
+-- Trigger de tipo DDL
+-- Un trigger de tipo DDL es un trigger que se ejecuta en respuesta a eventos de definición de datos (DDL), como CREATE, ALTER o DROP.
+-- Estos triggers se utilizan para controlar y auditar cambios en la estructura de la base de datos
+
+CREATE OR REPLACE TRIGGER TRIGGER_DDL 
+BEFORE DROP ON HR.SCHEMA 
+BEGIN
+  RAISE_APPLICATION_ERROR(-20000,'NO SE PUEDE BORRAR TABLAS');
+END;
+/
+-- Orientacion a objetos en PL/SQL
+
+-- Asi se crea el spec de un tipo de objeto
+create or replace TYPE PRODUCTO  AS OBJECT (
+
+--Atributos
+codigo number,
+nombre varchar2(100),
+precio number,
+
+--Métodos
+MEMBER FUNCTION ver_producto RETURN VARCHAR2 ,
+MEMBER FUNCTION ver_precio  RETURN NUMBER,
+MEMBER PROCEDURE cambiar_precio(pvp number)
+);
+
+-- Asi se crea el body del tipo de objeto
+create or replace TYPE body PRODUCTO  AS 
+MEMBER FUNCTION ver_producto RETURN VARCHAR2 as 
+begin
+    return nombre||' '||precio;
+
+end ver_producto;
+
+MEMBER FUNCTION ver_precio  RETURN NUMBER as
+begin
+  return precio;
+end ver_precio;
+
+MEMBER PROCEDURE cambiar_precio(pvp number) as
+begin
+  precio:=pvp;
+end cambiar_precio;
+end;
+/
+
+
+-- Probar el tipo de objeto
+
+set serveroutput on format wrapped line 1000;
+declare
+  v1 producto:=producto(100,'manzanas',10);
+begin
+
+  dbms_output.put_line(v1.ver_producto());
+  dbms_output.put_line(v1.ver_precio());
+  v1.cambiar_precio(20);
+  dbms_output.put_line(v1.ver_precio());
+
+end;
+/
+
+-- SELF
+-- En los métodos de un tipo de objeto, se puede utilizar la palabra clave SELF para referirse a la instancia actual del objeto.
+-- Esto es útil para acceder a los atributos y métodos de la instancia dentro del propio método.
+-- En el ejemplo del tipo de objeto PRODUCTO, se podría modificar el método ver_producto para utilizar SELF en lugar de referirse directamente a los atributos nombre y precio. 
+-- Esto haría que el método sea más flexible y reutilizable, ya que se referiría a los atributos de la instancia actual del objeto, independientemente de cómo se llame al método.    
+
+
+-- Ejemplo de uso de SELF en un método de un tipo de objeto
+-- eñ self indica que se esta refiriendo a los atributos de la instancia actual del objeto, lo que hace que el método sea más genérico y pueda ser utilizado por cualquier instancia del tipo de objeto PRODUCTO sin necesidad de modificar el código del método.
+create or replace TYPE body PRODUCTO  AS 
+MEMBER FUNCTION ver_producto RETURN VARCHAR2 as 
+begin
+    return SELF.nombre||' '||SELF.precio;
+
+end ver_producto;
+
+MEMBER FUNCTION ver_precio  RETURN NUMBER as
+begin
+  return SELF.precio;
+end ver_precio;
+
+MEMBER PROCEDURE cambiar_precio(pvp number) as
+begin
+  SELF.precio:=pvp;
+end cambiar_precio;
+end;
 
 
 
 
+
+-- Metodos estaticos
+-- Un método estático es un método que pertenece a la clase en lugar de a una instancia específica de la clase. 
+-- Esto significa que se puede llamar al método sin necesidad de crear un objeto de la clase. En PL/SQL, los métodos estáticos se definen utilizando la palabra clave STATIC en la declaración del método dentro del tipo de objeto. 
+-- Los métodos estáticos son útiles para realizar operaciones que no dependen de los atributos de una instancia específica, como cálculos generales o funciones de utilidad.
+
+drop table auditoria;
+
+create table auditoria
+(usuario varchar2(100),
+fecha date);
+
+-- Ejemplo de un método estático en un tipo de objeto
+create or replace TYPE PRODUCTO  AS OBJECT (  
+--Atributos
+codigo number,
+nombre varchar2(100),
+precio number,  
+--Métodos
+MEMBER FUNCTION ver_producto RETURN VARCHAR2 ,
+MEMBER FUNCTION ver_precio  RETURN NUMBER,
+MEMBER PROCEDURE cambiar_precio(pvp number),
+STATIC PROCEDURE auditoria
+);             
+
+
+create or replace TYPE body PRODUCTO  AS 
+MEMBER FUNCTION ver_producto RETURN VARCHAR2 as 
+begin
+    return SELF.nombre||' '||SELF.precio;
+
+end ver_producto;
+
+MEMBER FUNCTION ver_precio  RETURN NUMBER as
+begin
+  return SELF.precio;
+end ver_precio;
+
+MEMBER PROCEDURE cambiar_precio(pvp number) as
+begin
+  SELF.precio:=pvp;
+end cambiar_precio;
+
+STATIC PROCEDURE auditoria
+as
+begin 
+    
+    insert into auditoria values(user,sysdate);
+
+end;
+
+end;
+-- invocar el metodo estatico
+set serveroutput on;
+begin
+  PRODUCTO.auditoria;
+end;
+/ 
+
+select * from auditoria;
 
 
