@@ -4,6 +4,7 @@
 BEGIN 
   NULL;
 END;
+/
 
 
 -- Visualizar salida por pantalla
@@ -17,7 +18,7 @@ BEGIN
   -- Concatena cadenas y resultados
   DBMS_OUTPUT.PUT_LINE('La suma de 100 y 200 es: ' || (100 + 200));
 END;
-
+/
 
 
 -- Variables y tipos de datos
@@ -3192,13 +3193,23 @@ where codigo = 1;
 
 -- Usar funciones JSON en PL/SQL
 
+select json_value(datos,'$.pais')
+from productos1
+where codigo=3;
+
+set serveroutput on 
+declare
+c1  varchar2(4000);
+begin
+
 select json_value(prod1.datos,'$.pais') into c1 from productos1 prod1 where codigo=3;
 dbms_output.put_line(c1);
+
 
 select json_value(prod1.datos,'$.direccion') into c1 from productos1 prod1 where codigo=3;
 dbms_output.put_line(c1);
   
-select json_value(rod1.datos,'$.direccion.calle') into c1 from productos1 prod1 where codigo=3;
+select json_value(prod1.datos,'$.direccion.calle') into c1 from productos1 prod1 where codigo=3;
 dbms_output.put_line(c1);
 
 select json_query(prod1.datos,'$.direccion') into c1 from productos1 prod1 where codigo=3;
@@ -3210,66 +3221,122 @@ dbms_output.put_line(c1);
 select json_transform(datos, rename '$.poblacion'='pob') into c1 from productos1 where codigo=3;
 dbms_output.put_line(c1);
 
---  Comando PUT
+end;
+/
 
-   
+
+
+--  Comando PUT
+set serveroutput on
+
+declare
+  json1 json_object_t;
+begin
+  -- Crear objeto JSON vacío
+  json1 := json_object_t();
+
   -- Poner contenido escalar
   json1.put('edad',29);
   json1.put('telefono','99999999');
   dbms_output.put_line(json1.to_string);
-  
-  -- Poner un documento anidado
+
+  -- Poner un documento anidado (como texto)
   json1.put('direccion','{"calle":"pez","numero":5,"ciudad":"madrid"}');
   dbms_output.put_line(json1.to_string);
+
+  -- Poner documento anidado como objeto JSON
   json1.put('direccion',json_object_t('{"calle":"pez","numero":5,"ciudad":"madrid"}'));
   dbms_output.put_line(json1.to_string);
 
-   -- Poner un array
+  -- Poner un array
   json1.put('experiencia',json_array_t('["excel","word","python","linux"]'));
   dbms_output.put_line(json1.to_string);
 
+end;
+/
 
 -- Otros comandos, Modificar, borrar y renombrar
   
+set serveroutput on
+
+declare
+  json1 json_object_t;
+begin
+  -- JSON inicial
+  json1 := json_object_t('{
+    "nombre":"Juan Perez",
+    "edad":29,
+    "telefono":"99999999",
+    "direccion":{"calle":"pez","numero":5,"ciudad":"madrid"},
+    "experiencia":["excel","word","python","linux"]
+  }');
+
+  dbms_output.put_line('JSON inicial:');
+  dbms_output.put_line(json1.to_string);
+
   -- Actualizar dato
   json1.put('edad',45);
+  dbms_output.put_line('Actualiza edad:');
   dbms_output.put_line(json1.to_string);
-  
+
   -- Renombrar clave
   json1.rename_key('nombre','nombre_completo');
+  dbms_output.put_line('Renombra nombre:');
   dbms_output.put_line(json1.to_string);
-  
+
   -- Eliminar un elemento
   json1.remove('telefono');
-  
+  dbms_output.put_line('Elimina telefono:');
   dbms_output.put_line(json1.to_string);
+
+end;
+/
 
   -- GET, recuperar informacion 
 
    -- SERIALIZACION
 
-   -- Recuperar valores concretos
-   v1:=json1.get_string('nombre_completo');
-   dbms_output.put_line(v1);
-   
-   -- Nos puede dar error de datos
-   v1:=json1.get_number('nombre_completo');
-   dbms_output.put_line(v1);
-   
-   -- debemos poner el tipo adecuado
-   v1:=json1.get_number('edad');
-   dbms_output.put_line(v1);
-     
-   v1:=json1.get_string('direccion');
-   dbms_output.put_line(v1);
-   
-   -- PAra recuperar un subdocumento
-   v1:=json1.get_object('direccion').get_String('calle');
-   dbms_output.put_line(v1);
-    
-   -- Ver el número de elementos en el documento  
-   v1:=json1.get_size;
-   dbms_output.put_line(v1);
+set serveroutput on
+
+declare
+  json1 json_object_t;
+  v1   varchar2(4000);
+  n1   number;
+begin
+  -- JSON inicial
+  json1 := json_object_t('{
+    "nombre_completo":"Juan Perez",
+    "edad":45,
+    "direccion":{"calle":"pez","numero":5,"ciudad":"madrid"},
+    "experiencia":["excel","word","python","linux"]
+  }');
+
+  -- Recuperar valores concretos
+  v1 := json1.get_string('nombre_completo');
+  dbms_output.put_line('Nombre: ' || v1);
+
+  -- Nos puede dar error de datos (tipo incorrecto)
+  -- n1 := json1.get_number('nombre_completo');
+  -- dbms_output.put_line(n1);
+
+  -- Debemos poner el tipo adecuado
+  n1 := json1.get_number('edad');
+  dbms_output.put_line('Edad: ' || n1);
+
+  -- Recuperar objeto como texto
+  v1 := json1.get_object('direccion').to_string;
+  dbms_output.put_line('Direccion JSON: ' || v1);
+
+  -- Recuperar un campo del subdocumento
+  v1 := json1.get_object('direccion').get_string('calle');
+  dbms_output.put_line('Calle: ' || v1);
+
+  -- Ver el número de elementos en el documento
+  n1 := json1.get_size;
+  dbms_output.put_line('Numero de claves: ' || n1);
+
+end;
+/
 
    -- Trabajar con la base de datos
 
@@ -3384,24 +3451,41 @@ end;
 
 -- Mltiples documentos en un array
 
- -- Array de documentos
-    json1:=json_array_t('[
-                         {"ciudad":"Madrid",
-                         "concesionario1":["bmw","mercedes","citroen"]
-                         },
-                         {"ciudad":"Valencia",
-                         "concesionario2":["honda","kia","audi"]}
-                         ]');
-        --Recuperar el tamaño
-        dbms_output.put_line(json1.get_size);
-        
-        -- recuperar un valor
-        dbms_output.put_line(json1.get(0).to_string);
-        
-    -- Recuperar todos
-    for x in 0..json1.get_size-1 loop
-           dbms_output.put_line(json1.get(x).to_string);
-    end loop;
+set serveroutput on
+
+declare
+  json1 json_array_t;
+begin
+
+  -- Múltiples documentos en un array
+  json1 := json_array_t('[
+    {
+      "ciudad":"Madrid",
+      "concesionario1":["bmw","mercedes","citroen"]
+    },
+    {
+      "ciudad":"Valencia",
+      "concesionario2":["honda","kia","audi"]
+    }
+  ]');
+
+  -- Recuperar el tamaño
+  dbms_output.put_line('Tamaño del array: ' || json1.get_size);
+
+  -- Recuperar un valor (primer documento)
+  dbms_output.put_line('Primer elemento:');
+  dbms_output.put_line(json1.get(0).to_string);
+
+  -- Recuperar todos los documentos
+  dbms_output.put_line('Recorrer todos los elementos:');
+
+  for x in 0 .. json1.get_size - 1 loop
+    dbms_output.put_line('Elemento ' || x || ':');
+    dbms_output.put_line(json1.get(x).to_string);
+  end loop;
+
+end;
+/
 
 set serveroutput on format wrapped line 1000;
 
@@ -3453,43 +3537,44 @@ end;
 
 
 -- Otras operaciones de un array JSON
+set serveroutput on
 
--- Crear el array
- json1:=json_array_t('["bmw","mercedes","citroen"]');
- dbms_output.put_line(json1.to_string);
- 
--- Ver el numero de posiciones
-dbms_output.put_line(json1.get_size);
+declare
+  json1 json_array_t;
+begin
 
--- Añadir un elemento
- json1.append('ford');
- dbms_output.put_line(json1.to_string);
+  -- Crear el array
+  json1 := json_array_t('["bmw","mercedes","citroen"]');
+  dbms_output.put_line('Array inicial: ' || json1.to_string);
+
+  -- Ver el numero de posiciones
+  dbms_output.put_line('Tamaño: ' || json1.get_size);
+
+  -- Añadir un elemento
+  json1.append('ford');
+  dbms_output.put_line('Añade ford: ' || json1.to_string);
 
   -- Añadir un nulo
- json1.append_null;
- dbms_output.put_line(json1.to_string);
+  json1.append_null;
+  dbms_output.put_line('Añade null: ' || json1.to_string);
 
- -- Poner un valor en una determinada posición
- json1.put(2,'renault');
- dbms_output.put_line(json1.to_string);
- 
+  -- Poner un valor en una determinada posición
+  json1.put(2,'renault');
+  dbms_output.put_line('Modifica posicion 2: ' || json1.to_string);
+
   -- Eliminar un elemento
   json1.remove(3);
-  dbms_output.put_line(json1.to_string);
-   
-   -- Ponerun array
-   json1.put(3,json_array_t('["f1","f2","f3"]'));
-   dbms_output.put_line(json1.to_string);
+  dbms_output.put_line('Elimina posicion 3: ' || json1.to_string);
+
+  -- Poner un array dentro del array
+  json1.put(3,json_array_t('["f1","f2","f3"]'));
+  dbms_output.put_line('Inserta subarray: ' || json1.to_string);
 
   -- Añadir un subdocumento
-  json1.append(json_element_t.parse('{"nombre":"alberto","apellidos":"perez Rodriguez"}'));
-  dbms_output.put_line(json1.to_string);
-  
- 
+  json1.append(
+     json_element_t.parse('{"nombre":"alberto","apellidos":"perez Rodriguez"}')
+  );
+  dbms_output.put_line('Añade objeto JSON: ' || json1.to_string);
 
-
-
-
-
-
-
+end;
+/
