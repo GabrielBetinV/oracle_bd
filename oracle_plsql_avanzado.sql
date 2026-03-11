@@ -21,7 +21,7 @@ SELECT * FROM USER_DEPENDENCIES WHERE NAME='EMP_DETAILS_VIEW';
 SELECT * FROM USER_DEPENDENCIES WHERE NAME='LISTAR';
 SELECT * FROM USER_DEPENDENCIES WHERE REFERENCED_NAME='EMPLOYEES';
 
--- Combprobar  el estado de los objetos Oracle
+-- Comprobar  el estado de los objetos Oracle
 
 DESC USER_OBJECTS;
 
@@ -29,7 +29,7 @@ SELECT * FROM USER_OBJECTS;
 
 SELECT STATUS,COUNT(*) FROM USER_OBJECTS GROUP BY STATUS;
 
-SELECT STATUS,COUNT(*) FROM USER_OBJECTS WHERE STATUS='INVALID';
+SELECT * FROM USER_OBJECTS WHERE STATUS='INVALID';
 
 -- Ejemplo practico de invalidacion de un objeto
 
@@ -39,7 +39,8 @@ SELECT * FROM USER_OBJECTS;
 
 SELECT STATUS,COUNT(*) FROM USER_OBJECTS GROUP BY STATUS;
 
-SELECT STATUS,COUNT(*) FROM USER_OBJECTS WHERE STATUS='INVALID';
+SELECT * FROM USER_OBJECTS WHERE STATUS='INVALID';
+
 
 CREATE TABLE PRUEBA(C1 NUMBER, C2 NUMBER);
 
@@ -178,8 +179,9 @@ SELECT * FROM USER_DEPENDENCIES WHERE REFERENCED_NAME='PRUEBA_V';
 -- Ejecutar el procedimiento deptree_fill para llenar la tabla DEPTREE con las dependencias de la tabla PRUEBA.
 -- Parametros,  (tipo de objeto de donde partimos, esquema de donde partimos, nombre del objeto de donde partimos   )
 
-EXECUTE deptree_fill('TABLE','HR','PRUEBA');
+EXECUTE SYS.deptree_fill('TABLE','HR','PRUEBA');
 SELECT * FROM DEPTREE;
+
 SELECT LPAD(SEQ#,NESTED_LEVEL*1+1,'*') ||'  '||TYPE||' '||SCHEMA||' '||NAME FROM DEPTREE;
 
 
@@ -210,6 +212,7 @@ EXECUTE  DBMS_UTILITY.VALIDATE('HR','PRUEBA',1);
 
 -- Compilar un objeto, por ejemplo, para la tabla PRUEBA
 -- parametros () (esquema, nombre del objeto, tipo de compilacion, reutilizar configuraciones)
+set serveroutput on;
 EXECUTE  DBMS_UTILITY.COMPILE_SCHEMA('HR',COMPILE_ALL=>FALSE,REUSE_SETTINGS=>TRUE);
 
 
