@@ -220,4 +220,112 @@ EXECUTE  DBMS_UTILITY.COMPILE_SCHEMA('HR',COMPILE_ALL=>FALSE,REUSE_SETTINGS=>TRU
 -- Son cursores que se pueden pasar como parámetros a procedimientos y funciones.
 -- Se pueden usar para devolver un conjunto de resultados de una consulta a un programa cliente, como una aplicación Java o una aplicación .NET.
 
+-- Son cursores variables, referecias a a otros cursores
+set serveroutput on;
+DECLARE 
+--CURSOR C1 IS SELECT * FROM EMPLOYEE
+     TYPE CURSOR_VARIABLE IS REF CURSOR ;
+     V1 CURSOR_VARIABLE;
+	 X1 CURSOR_VARIABLE;
+     
+     EMPLEADOS EMPLOYEES%ROWTYPE;
+     
+BEGIN
+
+    OPEN V1 FOR SELECT * FROM EMPLOYEES;
+    FETCH V1 INTO EMPLEADOS;
+    DBMS_OUTPUT.PUT_LINE(EMPLEADOS.FIRST_NAME||' '||EMPLEADOS.SALARY);
+    
+    CLOSE V1;
+
+END;
+/
+
+-- Trabajar con cursores variables parte 1
+set serveroutput on;
+DECLARE 
+--CURSOR C1 IS SELECT * FROM EMPLOYEE
+     TYPE CURSOR_VARIABLE IS REF CURSOR ;
+     V1 CURSOR_VARIABLE;
+	 X1 CURSOR_VARIABLE;
+     
+     EMPLEADOS EMPLOYEES%ROWTYPE;
+     
+BEGIN
+   
+    -- Aca se coloca el query que estara asociado al cursor
+    OPEN V1 FOR SELECT * FROM EMPLOYEES;
+    FETCH V1 INTO EMPLEADOS;
+    DBMS_OUTPUT.PUT_LINE(EMPLEADOS.FIRST_NAME||' '||EMPLEADOS.SALARY);
+    
+    CLOSE V1;
+
+END;
+/
+
+-- Trabajar con cursores variables parte 2
+
+-- La variable C1, puede trabajar con varios querys
+
+set serveroutput on;
+DECLARE 
+     TYPE CUR_REF1 IS REF CURSOR ;
+     C1 CUR_REF1;
+     
+     EMPLEADOS EMPLOYEES%ROWTYPE;
+     
+     DEPARTAMENTOS DEPARTMENTS%ROWTYPE;
+
+BEGIN
+
+    OPEN C1 FOR SELECT * FROM EMPLOYEES;
+    FETCH C1 INTO EMPLEADOS;
+    DBMS_OUTPUT.PUT_LINE(EMPLEADOS.SALARY);
+        
+    OPEN C1 FOR SELECT * FROM departments;
+    FETCH C1 INTO DEPARTAMENTOS;
+    DBMS_OUTPUT.PUT_LINE(DEPARTAMENTOS.DEPARTMENT_NAME);
+    
+    CLOSE C1;
+
+END;
+/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
