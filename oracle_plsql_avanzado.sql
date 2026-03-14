@@ -291,15 +291,177 @@ BEGIN
 END;
 /
 
+-- Recorrer el cursor con un bucle
+
+set serveroutput on;
+DECLARE
+    TYPE CURSOR_VARIABLE is REF CURSOR;
+    v1 CURSOR_VARIABLE;
+    
+    empleados employees%rowtype;
+    departamentos departments%rowtype;
+    
+begin 
+
+ DBMS_OUTPUT.PUT_LINE('Prueba');
+
+
+    open V1 for SELECT * FROM EMPLOYEES;
+    FETCH V1 INTO EMPLEADOS;
+    DBMS_OUTPUT.PUT_LINE(EMPLEADOS.SALARY);
+
+    open V1 for SELECT * FROM DEPARTMENTS;
+    FETCH V1 INTO DEPARTAMENTOS;
+    DBMS_OUTPUT.PUT_LINE(DEPARTAMENTOS.DEPARTMENT_NAME);
+    
+    CLOSE V1;
+	
+	    
+    OPEN V1 FOR SELECT * FROM DEPARTMENTS;
+    FETCH V1 INTO DEPARTAMENTOS;
+    WHILE V1%FOUND LOOP
+        DBMS_OUTPUT.PUT_LINE(DEPARTAMENTOS.DEPARTMENT_NAME);
+        FETCH V1 INTO DEPARTAMENTOS;
+    END LOOP;
+    CLOSE V1;
+END;
+/
+
+
+-- REF CURSORS y tipos
+-- Se le coloc un tipo, en este caso es de tipo de department
+
+set serveroutput on
+DECLARE
+    -- CURSOR C1 IS SELECT * FROM EMPLOYEE;
+    TYPE CURSOR_VARIABLE IS REF CURSOR RETURN DEPARTMENTS%ROWTYPE;
+    V1 CURSOR_VARIABLE ;
+    
+    DEPARTAMENTOS DEPARTMENTS%ROWTYPE;
+BEGIN
+OPEN V1 FOR SELECT * FROM DEPARTMENTS WHERE DEPARTMENT_ID > 150;
+    FETCH V1 INTO DEPARTAMENTOS;
+    WHILE V1%FOUND LOOP
+        DBMS_OUTPUT.PUT_LINE(DEPARTAMENTOS.DEPARTMENT_NAME);
+        FETCH V1 INTO DEPARTAMENTOS;
+    END LOOP;
+    CLOSE V1;
+END;
+/
 
 
 
+-- REF CURSORS en funciones
+
+-- Cuando se envia un ref cursors como parametro, se debe coloca in out
+
+CREATE OR REPLACE PACKAGE PAQ1
+AS
+  TYPE C_VARIABLE IS REF CURSOR;
+  FUNCTION DEVOLVER_DATOS(C1 IN OUT C_VARIABLE ,X NUMBER) RETURN VARCHAR2;
+END;
+/
+
+CREATE OR REPLACE PACKAGE BODY PAQ1 AS
+   FUNCTION DEVOLVER_DATOS(C1 IN OUT C_VARIABLE ,X NUMBER) RETURN VARCHAR2
+   IS     
+        DEPARTAMENTOS DEPARTMENTS%ROWTYPE;
+        EMPLEADOS EMPLOYEES%ROWTYPE;
+   BEGIN
+        IF X=1 THEN
+            OPEN C1 FOR SELECT *  FROM EMPLOYEES;
+            FETCH C1 INTO EMPLEADOS;
+            RETURN EMPLEADOS.FIRST_NAME; 
+            
+        ELSE
+            OPEN C1 FOR SELECT *  FROM DEPARTMENTS;
+            FETCH C1 INTO DEPARTAMENTOS;
+            RETURN DEPARTAMENTOS.DEPARTMENT_NAME; 
+        END IF;
+    END;
+END;
+/
 
 
+--PROBAR EL CODIGO ANTERIOR
+set serveroutput on;
+DECLARE
+  DATOS PAQ1.C_VARIABLE;
+BEGIN
+    DBMS_OUTPUT.PUT_LINE(PAQ1.DEVOLVER_DATOS(DATOS,2));
+END;
+/
 
 
+-- Compartir cursores
+-- Como esos datos estan apuntados  por punteros en memoria
+-- se puede compartir, es decir, en este caso le paso la variable V1  a la V2
+-- Pero apuntan a la misma informacion, no se hace una copia
+
+SET SERVEROUTPUT ON;
 
 
+DECLARE
+-- CURSOR C1 IS SELECT * FROM EMPLOYEE;
+    TYPE CURSOR_VARIABLE IS REF CURSOR RETURN EMPLOYEES%ROWTYPE;
+    V1 CURSOR_VARIABLE;
+    V2 CURSOR_VARIABLE;
+   
+    EMPLEADOS EMPLOYEES%ROWTYPE;
+    
+BEGIN
+    --ABRIMOS EL CURSOR CON LA PRIMERA VARIABLE
+    OPEN V1 FOR SELECT * FROM EMPLOYEES ORDER BY FIRST_NAME;
+    FETCH V1 INTO EMPLEADOS;
+    
+    -- Aca va a la fila uno
+    DBMS_OUTPUT.PUT_LINE(EMPLEADOS.FIRST_NAME||' '||EMPLEADOS.SALARY);
+    
+    --ASIGNAMOS V1 A V2
+    V2:=V1;
+    FETCH V2 INTO EMPLEADOS;
+    
+    -- En este cso no muestra el numero uno, sino , el numero dos
+    -- ya que sigue la referencia del puntero
+    DBMS_OUTPUT.PUT_LINE(EMPLEADOS.FIRST_NAME||' '||EMPLEADOS.SALARY);
+    
+    FETCH V1 INTO EMPLEADOS;
+    DBMS_OUTPUT.PUT_LINE(EMPLEADOS.FIRST_NAME||' '||EMPLEADOS.SALARY);
+    
+    FETCH V2 INTO EMPLEADOS;
+    DBMS_OUTPUT.PUT_LINE(EMPLEADOS.FIRST_NAME||' '||EMPLEADOS.SALARY);
+   
+    CLOSE V1;
+END;
+/
+
+-- SYS_REFCURSOR
+
+SET SERVEROUTPUT ON
+
+--SYS_REFCURSOR
+-- Es un tipo predefinido, que es de tipo ref cursors
+-- Sirve para indicar que una variable de tipo ref cursors, sin colcar el tipo
+-- Si la variable retorna algo, no puede utilizarse
+
+DECLARE
+    --TYPE CURSOR_VARIABLE is REF CURSOR RETURN EMPLOYEES%ROWTYPE;
+    V1 SYS_REFCURSOR;
+    
+    DEPARTAMENTOS DEPARTMENTS%ROWTYPE;   
+    
+begin 
+
+	    
+    OPEN V1 FOR SELECT * FROM DEPARTMENTS;
+    FETCH V1 INTO DEPARTAMENTOS;
+    WHILE V1%FOUND LOOP
+        DBMS_OUTPUT.PUT_LINE(DEPARTAMENTOS.DEPARTMENT_NAME);
+        FETCH V1 INTO DEPARTAMENTOS;
+    END LOOP;
+    CLOSE V1;
+END;
+/
 
 
 
