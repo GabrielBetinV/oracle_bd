@@ -1240,6 +1240,11 @@ SELECT * FROM TAB;
 
 
 -- OBJETCS, NESTED TABLES y VARRAYS
+
+-- Es un objeto que tiene atributos y metodos
+-- Nos permite crear objetos complejos
+-- Es de SQL, no de PLSQL
+-- Se puede usar en tablas, varrays y nested tables
 CREATE OR REPLACE TYPE OBJETO_REGIONES IS OBJECT
 (
    REGION_ID NUMBER,
@@ -1247,16 +1252,18 @@ CREATE OR REPLACE TYPE OBJETO_REGIONES IS OBJECT
 );
 /
 
-
+-- Ekjemplo, Crear un nested table de objetos
 CREATE OR REPLACE TYPE NESTED_REGIONES IS TABLE OF OBJETO_REGIONES;
 /
 
+
+-- Crear una tabla con una columna tipo nested table de objetos
 CREATE TABLE N_REGIONES
 (
 CODIGO NUMBER,
 REGIONES NESTED_REGIONES
 )
-NESTED TABLE REGIONES STORE AS TABLA_REGIONES
+NESTED TABLE REGIONES STORE AS TABLA_REGIONES;
 
 
 
