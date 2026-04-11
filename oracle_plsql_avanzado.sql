@@ -565,7 +565,7 @@ END;
 /
 --SPARSE
 
--- Introducir datos comuestos en una index by
+-- Introducir datos compuestos en una index by
 
 SET SERVEROUTPUT ON
 DECLARE
@@ -672,25 +672,591 @@ BEGIN
 END;
 /
 
--- BULK COLLET
+-- BULLK COLLET
+-- ES UNA FORMA DE CARGAR DATOS EN UNA TABLA
+-- ES MAS RAPIDO QUE UN FOR     
+-- SE UTILIZA PARA CARGAR DATOS EN UNA TABLA
+
+-- El array comienza desde 1, no desde cero
+
+SET SERVEROUTPU ON;
+DECLARE
+
+  TYPE EMPLEADOS IS TABLE OF EMPLOYEES%ROWTYPE INDEX BY PLS_INTEGER;
+ 
+  EMPLES EMPLEADOS;
+
+BEGIN
+     SELECT * 
+     BULK COLLECT INTO EMPLES
+     FROM EMPLOYEES WHERE SALARY > 5000;
+    
+     FOR I IN 1..EMPLES.COUNT() LOOP
+        DBMS_OUTPUT.PUT_LINE(EMPLES(I).FIRST_NAME);
+     END LOOP;
+END;
+/
+
+
+-- Metodos de las colecciones
+/*
+
+---
+
+# ⚡ Tipos de colecciones en PL/SQL
+
+## 🔹 1. Associative Array (Index-By Table)
+
+👉 Es como un **mapa (clave → valor)** en memoria.
+
+* Índices: números o strings
+* No tiene tamaño fijo
+* Puede ser **disperso** (huecos)
+* Solo existe en PL/SQL (no en SQL)
+
+✔ Ideal para:
+
+* Caché en memoria
+* Búsquedas rápidas tipo diccionario
+
+🧠 Clave:
+
+> Es el más flexible y rápido, pero no lo puedes usar directamente en SQL
+
+---
+
+## 🔹 2. Nested Table
+
+👉 Es como una **tabla dinámica sin límite fijo**
+
+* Índices numéricos
+* Puede crecer dinámicamente (`EXTEND`)
+* Puede tener huecos (`DELETE`)
+* Sí se puede usar en SQL
+
+✔ Ideal para:
+
+* Pasar datos entre PL/SQL y SQL
+* Operaciones tipo tabla
+
+🧠 Clave:
+
+> Es el más parecido a una tabla real
+
+---
+
+## 🔹 3. VARRAY
+
+👉 Es un **arreglo con tamaño máximo definido**
+
+* Tamaño fijo (límite)
+* Siempre es **denso** (sin huecos)
+* Mantiene el orden
+* Se puede usar en SQL
+
+✔ Ideal para:
+
+* Listas pequeñas y controladas
+* Datos donde importa el orden
+
+🧠 Clave:
+
+> Es el más estructurado y restringido
+
+---
+
+# 🚀 Diferencia rápida (tipo entrevista)
+
+* **Associative Array** → flexible, rápido, solo memoria, tipo diccionario
+* **Nested Table** → dinámico, tipo tabla, permite huecos
+* **VARRAY** → tamaño fijo, ordenado, sin huecos
+
+---
+
+*/
+SET SERVEROUTPUT ON;
+DECLARE
+    ------------------------------------------------------------------
+    -- Tipos de colecciones
+    ------------------------------------------------------------------
+    TYPE t_assoc IS TABLE OF VARCHAR2(50) INDEX BY PLS_INTEGER;
+    TYPE t_nested IS TABLE OF VARCHAR2(50);
+    TYPE t_varray IS VARRAY(5) OF VARCHAR2(50);
+
+    v_assoc  t_assoc;
+    v_nested t_nested := t_nested();
+    v_varray t_varray := t_varray();
+
+    i NUMBER;
+BEGIN
+    ------------------------------------------------------------------
+    -- ================== ASSOCIATIVE ARRAY ==========================
+    ------------------------------------------------------------------
+    v_assoc(1) := 'A';
+    v_assoc(3) := 'B';
+    v_assoc(5) := 'C';
+
+    DBMS_OUTPUT.PUT_LINE('--- ASSOCIATIVE ARRAY ---');
+
+    -- COUNT
+    DBMS_OUTPUT.PUT_LINE('COUNT: ' || v_assoc.COUNT);
+
+    -- FIRST / LAST
+    DBMS_OUTPUT.PUT_LINE('FIRST: ' || v_assoc.FIRST);
+    DBMS_OUTPUT.PUT_LINE('LAST: ' || v_assoc.LAST);
+
+    -- EXISTS
+    IF v_assoc.EXISTS(3) THEN
+        DBMS_OUTPUT.PUT_LINE('EXISTS(3): SI');
+    END IF;
+
+    -- NEXT / PRIOR (recorrido seguro)
+    i := v_assoc.FIRST;
+    WHILE i IS NOT NULL LOOP
+        DBMS_OUTPUT.PUT_LINE('VALOR: ' || v_assoc(i));
+        i := v_assoc.NEXT(i);
+    END LOOP;
+
+    -- DELETE
+    v_assoc.DELETE(3);
+    DBMS_OUTPUT.PUT_LINE('COUNT despues DELETE: ' || v_assoc.COUNT);
+
+    ------------------------------------------------------------------
+    -- ================== NESTED TABLE ===============================
+    ------------------------------------------------------------------
+    DBMS_OUTPUT.PUT_LINE(CHR(10) || '--- NESTED TABLE ---');
+
+    -- EXTEND
+    v_nested.EXTEND;
+    v_nested(1) := 'X';
+
+    v_nested.EXTEND(2);
+    v_nested(2) := 'Y';
+    v_nested(3) := 'Z';
+
+    -- COUNT
+    DBMS_OUTPUT.PUT_LINE('COUNT: ' || v_nested.COUNT);
+
+    -- FIRST / LAST
+    DBMS_OUTPUT.PUT_LINE('FIRST: ' || v_nested.FIRST);
+    DBMS_OUTPUT.PUT_LINE('LAST: ' || v_nested.LAST);
+
+    -- EXISTS
+    IF v_nested.EXISTS(2) THEN
+        DBMS_OUTPUT.PUT_LINE('EXISTS(2): SI');
+    END IF;
+
+    -- NEXT / PRIOR
+    i := v_nested.FIRST;
+    WHILE i IS NOT NULL LOOP
+        DBMS_OUTPUT.PUT_LINE('VALOR: ' || v_nested(i));
+        i := v_nested.NEXT(i);
+    END LOOP;
+
+    -- DELETE (genera huecos)
+    v_nested.DELETE(2);
+
+    -- TRIM
+    v_nested.TRIM;
+
+    DBMS_OUTPUT.PUT_LINE('COUNT despues DELETE/TRIM: ' || v_nested.COUNT);
+
+    ------------------------------------------------------------------
+    -- ================== VARRAY =====================================
+    ------------------------------------------------------------------
+    DBMS_OUTPUT.PUT_LINE(CHR(10) || '--- VARRAY ---');
+
+    -- EXTEND
+    v_varray.EXTEND;
+    v_varray(1) := 'AA';
+
+    v_varray.EXTEND(2);
+    v_varray(2) := 'BB';
+    v_varray(3) := 'CC';
+
+    -- COUNT
+    DBMS_OUTPUT.PUT_LINE('COUNT: ' || v_varray.COUNT);
+
+    -- LIMIT
+    DBMS_OUTPUT.PUT_LINE('LIMIT: ' || v_varray.LIMIT);
+
+    -- FIRST / LAST
+    DBMS_OUTPUT.PUT_LINE('FIRST: ' || v_varray.FIRST);
+    DBMS_OUTPUT.PUT_LINE('LAST: ' || v_varray.LAST);
+
+    -- EXISTS
+    IF v_varray.EXISTS(1) THEN
+        DBMS_OUTPUT.PUT_LINE('EXISTS(1): SI');
+    END IF;
+
+    -- RECORRIDO
+    FOR i IN v_varray.FIRST .. v_varray.LAST LOOP
+        DBMS_OUTPUT.PUT_LINE('VALOR: ' || v_varray(i));
+    END LOOP;
+
+    -- TRIM
+    v_varray.TRIM(1);
+
+    DBMS_OUTPUT.PUT_LINE('COUNT despues TRIM: ' || v_varray.COUNT);
+
+END;
+/
+
+
+SET SERVEROUTPUT ON;
+DECLARE
+  
+   TYPE SUMA_SALARIOS IS RECORD 
+      (
+         NOMBRE DEPARTMENTS.DEPARTMENT_NAME%TYPE,
+         SUMA_SALARIOS NUMBER
+      );
+
+  TYPE SUMA_SAL IS TABLE OF SUMA_SALARIOS INDEX BY PLS_INTEGER;
+ 
+  
+  SALARIOS SUMA_SAL;
+  
+BEGIN
+     SELECT DEPARTMENT_NAME,SUM(SALARY)
+     BULK COLLECT INTO SALARIOS
+     FROM EMPLOYEES JOIN DEPARTMENTS USING (DEPARTMENT_ID)
+     GROUP BY DEPARTMENT_NAME;
+    
+     FOR I IN 1..SALARIOS.COUNT() LOOP
+        DBMS_OUTPUT.PUT_LINE(SALARIOS(I).NOMBRE||' '||SALARIOS(I).SUMA_SALARIOS);
+     END LOOP;
+     
+     DBMS_OUTPUT.PUT_LINE('NÚMERO EMPLEADOS:'||SALARIOS.COUNT());
+     DBMS_OUTPUT.PUT_LINE('PRIMER REGISTRO:'||SALARIOS.FIRST());
+     DBMS_OUTPUT.PUT_LINE('ULTIMO REGISTRO:'||SALARIOS.LAST());
+     IF SALARIOS.EXISTS(20) THEN
+        DBMS_OUTPUT.PUT_LINE('EXISTE');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('NO EXISTE');
+    END IF;
+    SALARIOS.DELETE(1);
+    DBMS_OUTPUT.PUT_LINE('PRIMER REGISTRO:'||SALARIOS.FIRST());
+    DBMS_OUTPUT.PUT_LINE(SALARIOS.PRIOR(3));
+	DBMS_OUTPUT.PUT_LINE(SALARIOS.NEXT(3));
+    SALARIOS.DELETE(4);
+	DBMS_OUTPUT.PUT_LINE(SALARIOS.PRIOR(3));
+	DBMS_OUTPUT.PUT_LINE(SALARIOS.NEXT(3));
+END;
+/
+
+-- VARRAYS
+SET SERVEROUTPUT ON
+DECLARE
+  TYPE V1 IS VARRAY(50) OF VARCHAR2(100);
+
+  -- Hay que inicializar las variables arrays, no nesesariamente
+  -- debe ser todas las posiciones
+  
+  -- Ejemplo 
+  -- VAR1 V1 := V1();
+  
+  -- Con valores  
+  VAR1 V1:= V1('ADIOS','HOLA','TERCERO','XXX','ZZZZ');
+  
+BEGIN
+  DBMS_OUTPUT.PUT_LINE(VAR1(1));
+  VAR1(1):='HOLA';
+  DBMS_OUTPUT.PUT_LINE(VAR1(1));  
+  DBMS_OUTPUT.PUT_LINE(VAR1(5));
+
+END;
+/
+
+-- Extender varrays
+SET SERVEROUTPUT ON
+DECLARE
+  TYPE V1 IS VARRAY(50) OF VARCHAR2(100);
+  
+
+  VAR1 V1:= V1('ADIOS','HOLA','TERCERO','XXX','ZZZZ');
+  
+BEGIN
+  DBMS_OUTPUT.PUT_LINE(VAR1(1));
+  VAR1(1):='HOLA';
+  DBMS_OUTPUT.PUT_LINE(VAR1(1));  
+  DBMS_OUTPUT.PUT_LINE(VAR1(5));
+  DBMS_OUTPUT.PUT_LINE(VAR1.count());
+  DBMS_OUTPUT.PUT_LINE(VAR1.LIMIT());
+  VAR1.EXTEND();
+  DBMS_OUTPUT.PUT_LINE(VAR1.count());
+  
+  -- Añade 5 posiciones mas
+  VAR1.EXTEND(5);
+  DBMS_OUTPUT.PUT_LINE(VAR1.count());
+  --VAR1.EXTEND(50);
+END;
+/
+
+
+-- Ejemplo Varray, Bull collect y cursores
+
+
+SET SERVEROUTPUT ON
+DECLARE
+  TYPE EMPLEADO IS VARRAY(10) OF EMPLOYEES%ROWTYPE;
+  
+  EMPLEADOS EMPLEADO:=EMPLEADO();
+BEGIN
+  SELECT * BULK COLLECT INTO EMPLEADOS
+  FROM EMPLOYEES FETCH FIRST 10 ROWS ONLY;
+  FOR I IN EMPLEADOS.FIRST()..EMPLEADOS.LAST() LOOP
+     DBMS_OUTPUT.PUT_LINE(EMPLEADOS(I).FIRST_NAME||' '||EMPLEADOS(I).SALARY);
+  END LOOP;
+END;
+/
+
+SET SERVEROUTPUT ON
+DECLARE
+  TYPE EMPLEADO IS VARRAY(10) OF EMPLOYEES%ROWTYPE;
+
+  CURSOR C1 IS SELECT * 
+  FROM EMPLOYEES FETCH FIRST 10 ROWS ONLY;
+
+  CONTADOR NUMBER:=1;
+
+  EMPLEADOS EMPLEADO:=EMPLEADO();
+BEGIN
+
+  FOR X IN C1 LOOP
+    EMPLEADOS.EXTEND(1);
+    EMPLEADOS(CONTADOR):=X;
+    CONTADOR:=CONTADOR+1;
+  END LOOP;
+   FOR I IN EMPLEADOS.FIRST..EMPLEADOS.LAST LOOP
+     DBMS_OUTPUT.PUT_LINE(EMPLEADOS(I).FIRST_NAME||' '||EMPLEADOS(I).SALARY);
+     
+  END LOOP;
+END;
+/
+
+-- Crear un varray en la base de datos
+CREATE OR REPLACE TYPE DATO IS VARRAY(80) OF VARCHAR2(100);
+/
+DESC DATO;
+/
+SET SERVEROUTPUT ON
+DECLARE
+  DATOS DATO;
+BEGIN 
+  DATOS:=DATO('UNO','DOS');
+  DBMS_OUTPUT.PUT_LINE(DATOS(1));
+END;
+/
+
+-- Crear una tabla con una columna tipo varray
+
+CREATE TABLE PRUEBA_array (C1 NUMBER, C2 DATO, C3 VARCHAR2(60));
+DESC PRUEBA_array
+DESC DATO
+SELECT * FROM USER_TYPES;
+SELECT * FROM USER_VARRAYS;
+SELECT * FROM PRUEBA_array;
+
+-- Operador TABLE, acceder a columnas de tipo VARRAY
+
+
+INSERT INTO PRUEBA_array VALUES(100,DATO('UNO','DOS'),'EJEMPLO');
+INSERT INTO PRUEBA_array VALUES(100,DATO('AA','BB','CCC','DDD'),'EJEMPLO');
+SELECT C2 FROM PRUEBA_array;
+
+-- No se puede, da error
+-- OJO: No se puede acceder a las columnas de un varray directamente
+-- Se debe usar el operador TABLE
+SELECT C2(1) FROM PRUEBA;
+
+-- El operador table, es como si fuera una tabla
+
+SELECT C1, T2.*,C3
+FROM PRUEBA_array, table(PRUEBA_array.C2) T2  
+WHERE C1=100;
+
+
+INSERT INTO PRUEBA_array VALUES(200,DATO('AA1','BB1','CCC1','DDD1'),'OTRO EJEMPLO');
+
+SELECT C1, T2.*,C3
+FROM PRUEBA_array, table(PRUEBA_array.C2) T2  
+WHERE C1=200;
+
+
+-- Metodos en los VARRAYS
+
+SET SERVEROUTPUT ON
+DECLARE
+  TYPE EMPLEADO IS VARRAY(10) OF EMPLOYEES%ROWTYPE; 
+  EMPLEADOS EMPLEADO:=EMPLEADO();
+BEGIN
+  SELECT * BULK COLLECT INTO EMPLEADOS
+  FROM EMPLOYEES FETCH FIRST 10 ROWS ONLY;
+  FOR I IN EMPLEADOS.FIRST()..EMPLEADOS.LAST() LOOP
+     DBMS_OUTPUT.PUT_LINE(EMPLEADOS(I).FIRST_NAME||' '||EMPLEADOS(I).SALARY);
+  END LOOP; 
+  DBMS_OUTPUT.PUT_LINE(EMPLEADOS.LAST());
+  DBMS_OUTPUT.PUT_LINE(EMPLEADOS.FIRST());
+  DBMS_OUTPUT.PUT_LINE(EMPLEADOS.NEXT(1));
+  DBMS_OUTPUT.PUT_LINE(EMPLEADOS.NEXT(10));
+   IF EMPLEADOS.EXISTS(20) THEN
+        DBMS_OUTPUT.PUT_LINE('EXISTE');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('NO EXISTE');
+    END IF;
+  --EMPLEADOS.DELETE(2);
+END;
+/
+
+
+-- NESTED TABLES, Tablas anidadas
+
+--NESTED TABLES 
+-- NO TIENEN LIMITE DEFINIDO
+-- SE ACCEDE POR POR POSICION
+-- SPARSE - DIPERSOS HUECOS
+-- VARRAYS
+SET SERVEROUTPUT ON
+DECLARE
+  TYPE EMPLEADO IS TABLE OF EMPLOYEES%ROWTYPE;
+  
+  EMPLEADOS EMPLEADO:=EMPLEADO();
+BEGIN
+  SELECT * BULK COLLECT INTO EMPLEADOS
+  FROM EMPLOYEES FETCH FIRST 10 ROWS ONLY;
+ 
+  FOR I IN EMPLEADOS.FIRST()..EMPLEADOS.LAST() LOOP
+     DBMS_OUTPUT.PUT_LINE(EMPLEADOS(I).FIRST_NAME||' '||EMPLEADOS(I).SALARY);
+ 
+  END LOOP;
+END;
+/
+
+
+-- Metodos en los NESTED TABLES
+
+
+--NESTED TABLES 
+-- NO TIENEN LIMITE DEFINIDO
+-- SE ACCEDE POR POR POSICION
+-- SPARSE - DIPERSOS HUECOS
+-- VARRAYS
+SET SERVEROUTPUT ON
+DECLARE
+  TYPE EMPLEADO IS TABLE OF EMPLOYEES%ROWTYPE;
+  
+  EMPLEADOS EMPLEADO:=EMPLEADO();
+BEGIN
+  SELECT * BULK COLLECT INTO EMPLEADOS
+  FROM EMPLOYEES FETCH FIRST 10 ROWS ONLY;
+ 
+  FOR I IN EMPLEADOS.FIRST()..EMPLEADOS.LAST() LOOP
+     DBMS_OUTPUT.PUT_LINE(EMPLEADOS(I).FIRST_NAME||' '||EMPLEADOS(I).SALARY);
+ 
+  END LOOP;
+  DBMS_OUTPUT.PUT_LINE(EMPLEADOS.LAST());
+  DBMS_OUTPUT.PUT_LINE(EMPLEADOS.FIRST());
+  DBMS_OUTPUT.PUT_LINE(EMPLEADOS.NEXT(1)); 
+  IF EMPLEADOS.EXISTS(20) THEN
+        DBMS_OUTPUT.PUT_LINE('EXISTE');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('NO EXISTE');
+    END IF;
+    EMPLEADOS.DELETE(2);
+    FOR I IN EMPLEADOS.FIRST()..EMPLEADOS.LAST() LOOP
+        IF EMPLEADOS.EXISTS(I) THEN
+            DBMS_OUTPUT.PUT_LINE(EMPLEADOS(I).FIRST_NAME||' '||EMPLEADOS(I).SALARY); 
+        END IF;
+    END LOOP;    
+END;
+/
+
+
+-- Crear una nested TAble a nivel de la base de datos
+
+
+CREATE OR REPLACE TYPE EMPLEADO_NESTED IS TABLE OF VARCHAR2(100);
+/
+
+set serveroutput on
+DECLARE
+  EMPLEADOS EMPLEADO_NESTED;
+BEGIN 
+  EMPLEADOS:=EMPLEADO_NESTED('SERGIO','ALBERTO','ROSA');
+  DBMS_OUTPUT.PUT_LINE(EMPLEADOS(1));
+END;
+/
+
+desc EMPLEADO_NESTED
+
+/
+
+SELECT * FROM USER_TYPES;
+/
+
+-- Crear tablas coon columnas nested tables
+
+desc EMPLEADO_NESTED;
+/
+
+
+-- Se crea de esta manera, indicando donde va a quedar los datos de la tabla auxiliar
+CREATE TABLE EMPLES
+(
+CODIGO NUMBER,
+DIRECCION VARCHAR2(100),
+DATOS EMPLEADO_NESTED
+)
+NESTED TABLE DATOS STORE AS TABLA_DATOS;
+/
+
+DESC EMPLES;
+
+-- VEr las tablas existentes en el esquema
+SELECT * FROM TAB;
 
 
 
+-- Trabajar con tablas con columnas NESTED TABLES
+  INSERT INTO EMPLES VALUES(100,'DIRECCION 1',EMPLEADO_NESTED('SERGIO','ALBERTO','ROSA'));
+  INSERT INTO EMPLES VALUES(200,'DIRECCION 2',EMPLEADO_NESTED('JUAN','MARIA','ANA','LUIS'));
+
+  SELECT * FROM EMPLES;
+
+  -- Acceder a las columnas de un nested table con alias
+  SELECT E.CODIGO, T.* 
+  FROM EMPLES E, TABLE(E.DATOS) T;
 
 
+-- Update en tablas con nested tables
+  UPDATE EMPLES E
+  SET E.DATOS = EMPLEADO_NESTED('SERGIO','ALBERTO','ROSA')
+  WHERE E.CODIGO=100;
+  
+    -- Delete
+    DELETE FROM EMPLES E
+    WHERE E.CODIGO=100;
 
 
+-- OBJETCS, NESTED TABLES y VARRAYS
+CREATE OR REPLACE TYPE OBJETO_REGIONES IS OBJECT
+(
+   REGION_ID NUMBER,
+   REGION_NAME VARCHAR2(25)
+);
+/
 
 
+CREATE OR REPLACE TYPE NESTED_REGIONES IS TABLE OF OBJETO_REGIONES;
+/
 
-
-
-
-
-
-
-
-
+CREATE TABLE N_REGIONES
+(
+CODIGO NUMBER,
+REGIONES NESTED_REGIONES
+)
+NESTED TABLE REGIONES STORE AS TABLA_REGIONES
 
 
 
