@@ -1267,6 +1267,597 @@ NESTED TABLE REGIONES STORE AS TABLA_REGIONES;
 
 
 
+-- Desde aca
+
+-- LOBS, Large objects
+-- Son objetos que pueden almacenar grandes cantidades de datos, como texto, imágenes, videos, etc.
+-- Son de tipo LOB, CLOB, BLOB, etc 
+
+-- LOBS Internos: Se almacenan dentro de la base de datos, en una tabla auxiliar
+-- CLOB: Character Large Object, para almacenar grandes cantidades de texto
+-- BLOB: Binary Large Object, para almacenar grandes cantidades de datos binarios, como imágenes
+
+
+-- Lobs Externos: Se almacenan fuera de la base de datos, en un archivo externo
+-- BFILE: Binary File, para almacenar grandes cantidades de datos binarios, pero en un archivo externo
+
+
+
+
+-- Crear columnas de tipo LOB
+
+create table pru_lob (
+   codigo number,
+   nombre varchar2(100),
+   datos  clob
+);
+
+DESC PRU_LOB;
+
+insert into pru_lob values ( 1,
+                             'PEDRO',
+                             'DSFJKDSAFKJSDAKLFJKLDSAJFLKJDSLKFJKLDSJAFLKDJSAKFD SA' );
+
+select *
+  from pru_lob;
+
+alter table pru_lob add (
+   foto blob
+);
+
+DESC PRU_LOB;
+
+-- Esto genera error, porque espera dato binarios para la columna BLOB, por eso se necesita utilizar el paquete DBMS_LOB para insertar datos en columnas de tipo LOB
+insert into pru_lob values ( 2,
+                             'ROSA',
+                             'DSFJKDSAFKJSDAKLFJKLDSAJFLKJDSLKFJKLDSJAFLKDJSAKFD SA',
+                             'KKKÑLOPSDFL,DSIMFDSJ' );
+
+-- EMPTY_BLOB y EMPTY_CLOB
+-- Funciones que sirven para grabar o inicializar  vacios de blob y clob
+-- Se recomienda utilizar estas funciones para inicializar los campos de tipo LOB, 
+-- ya que si se intenta insertar un valor nulo, puede generar errores o problemas de rendimiento
+-- de esta manera se graba el puntero al LOB, pero el LOB esta vacio, y luego se puede actualizar el LOB con el paquete DBMS_LOB
+
+
+
+--EMPTY_CLOB()
+--EMPTY_BLOB()
+
+insert into pru_lob values ( 3,
+                             'JUAN',
+                             empty_clob(),
+                             empty_blob() );
+select *
+  from pru_lob;
+
+
+
+-- BFILENAME - Cargar un BFILE
+-- Es una función que sirve para cargar un archivo externo como un BFILE, se le indica el directorio y el nombre del archivo
+-- El directorio debe estar creado en la base de datos, y debe tener permisos de lectura
+
+create table imagenes (
+   codigo number,
+   foto   bfile
+);
+
+/
+select *
+  from imagenes;
+/
+DESC IMAGENES;
+/
+declare
+   foto bfile;
+begin
+   foto := bfilename(
+      'FICHEROS',
+      'gatito1.jpg'
+   );
+   insert into imagenes values ( 1,
+                                 foto );
+end;
+/
+
+
+-- Directamente en un SQL
+insert into imagenes values ( 2,
+                              bfilename(
+                                 'FICHEROS',
+                                 'gatito1.jpg'
+                              ) );
+
+select *
+  from imagenes;
+
+select *
+  from all_directories;
+
+
+-- BFILE Ejemplo 1
+
+create table clientes (
+   codigo   number,
+   nombre   varchar2(100),
+   foto     bfile,
+   longitud number
+);
+
+/
+
+insert into clientes values ( 1,
+                              'ROSA',
+                              null,
+                              null );
+
+insert into clientes values ( 2,
+                              'PEDRO',
+                              null,
+                              null );
+
+insert into clientes values ( 3,
+                              'ANTONIO',
+                              null,
+                              null );
+
+insert into clientes values ( 4,
+                              'RAUL',
+                              null,
+                              null );
+
+insert into clientes values ( 5,
+                              'MARIA',
+                              null,
+                              null );
+
+/
+
+
+select *
+  from clientes;
+
+
+-- BFILE Ejemplo 2
+-- Usos del DBMS_LOB para trabajar con LOBs, en este caso con BFILEs
+
+-- Esta funcion devuelve la longitud del BFILE, si el archivo existe, sino devuelve 0
+create or replace function tam (
+   directorio varchar2,
+   codigo     number
+) return number is
+   fichero varchar2(100);
+   foto    bfile;
+begin
+   fichero := 'cliente'
+              || codigo
+              || '.jpg';
+   foto := bfilename(
+      directorio,
+      fichero
+   );
+   if dbms_lob.fileexists(foto) = 1 then
+      return dbms_lob.getlength(foto);
+   else
+      return 0;
+   end if;
+end;
+/
+
+   SET SERVEROUTPUT ON
+EXECUTE DBMS_OUTPUT.PUT_LINE(TAM('FICHEROS',1));
+
+-- BFILE Ejemplo 3
+
+-- Actualizar los clientes para que tengan la foto cargada, y la longitud del archivo
+create or replace procedure actualizar_clientes is
+   fichero varchar2(100);
+   foto    bfile;
+
+-- Cursor para recorrer los clientes, con for update, para poder actualizar los registros
+   cursor clientes is
+   select codigo
+     from clientes
+   for update;
+
+begin
+   for cliente in clientes loop
+      fichero := 'cliente'
+                 || cliente.codigo
+                 || '.jpg';
+      foto := bfilename(
+         'FICHEROS',
+         fichero
+      );
+      if dbms_lob.fileexists(foto) = 1 then
+         update clientes
+            set foto = foto,
+                longitud = dbms_lob.getlength(foto)
+          where current of cli;
+      end if;
+   end loop;
+end;
+/
+
+execute ACTUALIZAR_CLIENTES;
+select *
+  from clientes;
+
+
+-- Cargar un BFILE en un BLOB
+alter table clientes add comentarios blob default empty_blob();
+/
+DESC CLIENTES
+/
+select *
+  from clientes;
+/
+create or replace procedure carga_comentarios is
+   cursor cli is
+   select *
+     from clientes
+   for update;
+   fichero     varchar2(100);
+   comentarios bfile;
+   temporal    blob;
+begin
+   for c1 in cli loop 
+        --NOMBRE DEL FICHERO
+      fichero := 'comentarios'
+                 || c1.codigo
+                 || '.docx';
+        
+        --ASOCIAR EL FICHERO AL BFILE
+      comentarios := bfilename(
+         'FICHEROS',
+         fichero
+      );
+        
+        --ABRIR EL FICHERO. ES OBLIGATORIO SI QUEREMOS USAR LOADFROMMFILE
+      dbms_lob.open(
+         comentarios,
+         dbms_lob.lob_readonly
+      );
+        
+        --ES NECESARIO CREAR UN LOB TEMPORAL, PARA INICIALIZAR EL LOCALIZARO
+      dbms_lob.createtemporary(
+         temporal,
+         true
+      );
+        
+        -- CARGAMOS EL FICHERO A LA VARIABLE TEMPORAL 
+      dbms_lob.loadfromfile(
+         temporal,
+         comentarios,
+         dbms_lob.getlength(comentarios)
+      );
+        
+        --MODIFICAMOS LA COLUMNA DE LA TABLA
+      update clientes
+         set
+         comentarios = temporal
+       where current of cli;
+        
+        --CERRAMOS EL FICHERO
+      dbms_lob.close(comentarios);
+   end loop;
+end;
+/
+
+EXECUTE CARGA_COMENTARIOS;
+
+select *
+  from clientes;
+
+
+
+-- DBMS_LOB.READ, para leer el contenido de un LOB, en este caso de un CLOB
+alter table clientes add descripcion clob;
+/
+DESC CLIENTES;
+/
+select *
+  from clientes;
+/
+declare
+   texto varchar2(50) := 'DESCRIPCION DEL CLIENTE:';
+begin
+   for x in 1..5 loop
+      update clientes
+         set
+         descripcion = texto || x
+       where codigo = x;
+   end loop;
+end;
+/
+
+create table prueba_lob (
+   descri clob
+);
+
+DESC PRUEBA_LOB;
+
+create or replace procedure carga_descri is
+   cursor cli is
+   select *
+     from clientes
+   for update;
+   temporal clob;
+   cantidad integer := 5;
+   posicion integer := 1;
+begin
+   for c1 in cli loop 
+        --ABRIR EL FICHERO. ES OBLIGATORIO 
+      dbms_lob.open(
+         c1.descripcion,
+         dbms_lob.lob_readonly
+      );
+        
+       --LEEMOS 5 POSICIONES DE NUESTRO CAMPO DESCRIPCION Y LO DEJAMOS EN LA VARIABLE TEMPORAL
+      dbms_lob.read(
+         c1.descripcion,
+         cantidad,
+         posicion,
+         temporal
+      );
+      insert into prueba_lob values ( temporal );
+        
+       --CERRAR EL LOB
+      dbms_lob.close(c1.descripcion);
+   end loop;
+end;
+/
+
+EXECUTE CARGA_DESCRI;
+
+select *
+  from prueba_lob;
+
+select *
+  from clientes;
+
+
+
+-- DBMS_LOB.WRITE, para escribir en un LOB, en este caso en un CLOB
+
+create table prueba_lob1 (
+   empleado clob
+);
+/
+
+create or replace procedure carga_emple is
+   cursor cli is
+   select *
+     from employees;
+   temporal clob;
+   cantidad integer;
+   nombre   varchar2(100);
+begin
+   for c1 in cli loop 
+        
+        --ES NECESARIO CREAR UN LOB TEMPORAL, PARA INICIALIZAR EL LOCALIZADOR
+      dbms_lob.createtemporary(
+         temporal,
+         true
+      );
+        
+        --ABRIR EL LOB, EN MODO ESCCRITURA
+      dbms_lob.open(
+         temporal,
+         dbms_lob.lob_readwrite
+      );    
+           
+       --VARIABLE FORMADA POR EL NOMBRE Y APELLIDO DEL EMPLEADO
+      nombre := c1.first_name
+                || ' '
+                || c1.last_name;
+        
+        --VARIALBE CON LA LONGITUD DLE NOMBRE
+      cantidad := length(nombre);
+        
+        --ESCRIBIMOS EN LA VARIABLE LOB LOS DATOS
+      dbms_lob.write(
+         temporal,
+         cantidad,
+         1,
+         nombre
+      );
+        
+       -- INSERTAMOS EN LA TABLA
+      insert into prueba_lob1 values ( temporal );
+        
+        --CERRAMOS EL FICHEROS       
+      dbms_lob.close(temporal);
+   end loop;
+end;
+/
+
+EXECUTE CARGA_EMPLE;
+
+select *
+  from prueba_lob1;
+
+
+-- DMBS_LOB otras funciones
+
+select *
+  from clientes;
+
+
+-- DBMS_LOB.SUBSTR, para obtener una subcadena de un LOB, en este caso de un CLOB
+select descripcion,
+       dbms_lob.substr(
+          descripcion,
+          10,
+          1
+       ) as texto
+  from clientes;
+
+
+-- DBMS_LOB.INSTR, para buscar una subcadena dentro de un LOB, en este caso de un CLOB, devuelve la posición de la primera ocurrencia de la subcadena, si no la encuentra devuelve 0
+select descripcion,
+       dbms_lob.instr(
+          descripcion,
+          '1'
+       )
+  from clientes;
+
+select dbms_lob.substr(
+   foto,
+   10,
+   1
+) as texto
+  from clientes;
+
+
+-- DBMS_LOB excepciones,  si se intenta abrir un BFILE que no existe, se genera la excepcion NOEXIST_DIRECTORY, por eso es importante manejar las excepciones al trabajar con LOBs, para evitar errores y problemas de rendimiento
+
+declare
+   foto bfile;
+begin
+   foto := bfilename(
+      'F',
+      'gatito1.jpg'
+   );
+   dbms_lob.open(
+      foto,
+      dbms_lob.lob_readonly
+   );
+exception
+   when dbms_lob.noexist_directory then
+      raise_application_error(
+         -20000,
+         'EL DIRECTORIO NO EXISTE'
+      );
+end;
+/
+
+
+-- PL/SQL Nativo, es el lenguaje de programación que se ejecuta dentro de la base de datos, es un lenguaje procedural,
+-- que permite crear procedimientos, funciones, paquetes, triggers, etc, para realizar tareas complejas y automatizar procesos dentro de la base de datos.
+
+
+--Compilacion interpretada, el código se compila en tiempo de ejecución, es decir, 
+--cada vez que se ejecuta el bloque de código, se compila y se ejecuta, 
+--esto puede generar un impacto en el rendimiento si el bloque de código es muy grande o se ejecuta muchas veces, 
+--por eso es recomendable compilar el código antes de ejecutarlo, para evitar este impacto en el rendimiento.
+
+
+-- Compilacion nativa, el código se compila antes de ejecutarlo, es decir, se compila una sola vez 
+--y luego se ejecuta muchas veces, esto mejora el rendimiento, ya que el código ya esta compilado y listo para ejecutarse,
+-- para compilar el código se puede utilizar la opción NATIVE al crear el procedimiento, función  
+
+--El uso de la compilación nativa o interpretada, depende del caso de uso, si el bloque de código 
+--es muy grande o se ejecuta muchas veces, es recomendable utilizar la compilación nativa, 
+--para mejorar el rendimiento, pero si el bloque de código es pequeño o se ejecuta pocas veces, 
+--se puede utilizar la compilación interpretada, para facilitar el desarrollo y la depuración del código.
+
+
+
+-- Se puede colocar a nivel de base de datos, a nivel de sesión o a nivel de procedimiento, función, paquete, etc
+alter session set plsql_code_type = 'INTERPRETED';
+/
+
+create or replace procedure ejemplo as
+begin
+   dbms_output.put_line('EJEMPLO');
+end;
+/
+
+
+select *
+  from user_plsql_object_settings
+ where name like 'EJEMPLO';
+
+
+-- Ejemplo 
+
+alter session set plsql_code_type = 'INTERPRETED';
+
+create or replace procedure n1 as
+   v varchar2(1000) := 'A';
+   x date;
+   z varchar2(1000);
+begin
+   dbms_output.put_line(to_char(
+      sysdate,
+      'mi:ss'
+   ));
+   for i in 1..100000000 loop
+      for x in 1..15 loop
+         v := 'A'
+              || substr(
+            'AAAAAA',
+            1,
+            5
+         );
+      end loop;
+   end loop;
+
+   dbms_output.put_line(to_char(
+      sysdate,
+      'mi:ss'
+   ));
+end;
+/
+
+   set serveroutput on
+execute n1;
+
+alter session set plsql_code_type = 'NATIVE';
+alter session set plsql_code_type = 'INTERPRETED';
+
+/
+select *
+  from user_plsql_object_settings
+ where name like 'N1';
+
+ --Sobre carga en PL SQL, es la capacidad de crear varios procedimientos o funciones con el mismo nombre, 
+ --pero con diferentes parámetros, esto permite tener una mayor flexibilidad y reutilización del código, 
+ --ya que se pueden crear diferentes versiones de un mismo procedimiento o función, para diferentes casos de uso, 
+ --sin tener que crear procedimientos o funciones con nombres diferentes. 
+
+ -- Ejemplo, 
+
+ CREATE OR REPLACE PACKAGE SOBRECARGA AS
+  FUNCTION CONCATENAR(A NUMBER,B NUMBER) RETURN NUMBER;
+  FUNCTION CONCATENAR(A VARCHAR2,B VARCHAR2) RETURN VARCHAR2;
+  FUNCTION CONCATENAR(A DATE,B NUMBER) RETURN DATE;
+  
+END SOBRECARGA;
+/
+CREATE OR REPLACE PACKAGE BODY SOBRECARGA AS
+  FUNCTION CONCATENAR(A NUMBER,B NUMBER) RETURN NUMBER
+  IS
+  BEGIN
+    RETURN A+B;
+ END CONCATENAR;
+  
+  FUNCTION CONCATENAR( A VARCHAR2,B VARCHAR2) RETURN VARCHAR2
+  IS
+  BEGIN
+    RETURN A||' '||B;
+ END;
+  
+ FUNCTION CONCATENAR( A DATE,B NUMBER) RETURN DATE
+  IS
+  BEGIN
+    RETURN A+B;
+ END;
+
+END SOBRECARGA;
+/
+
+
+SET SERVEROUTPUT ON
+EXECUTE DBMS_OUTPUT.PUT_LINE(SOBRECARGA.CONCATENAR('ALBERTO','PÈREZ'));
+EXECUTE DBMS_OUTPUT.PUT_LINE(SOBRECARGA.CONCATENAR(10,30));
+EXECUTE DBMS_OUTPUT.PUT_LINE(SOBRECARGA.CONCATENAR(SYSDATE,10));
+
+
+
+
+
 
 
 
