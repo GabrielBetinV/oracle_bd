@@ -1858,6 +1858,413 @@ EXECUTE DBMS_OUTPUT.PUT_LINE(SOBRECARGA.CONCATENAR(SYSDATE,10));
 
 
 
+-- SQL dinamico con PL/SQL, es la capacidad de ejecutar sentencias SQL dinámicas, es decir, 
+-- sentencias SQL que se construyen en tiempo de ejecución, esto permite tener una mayor flexibilidad y reutilización del código, 
+-- ya que se pueden construir sentencias SQL dinámicas para diferentes casos de uso, sin tener que crear procedimientos o funciones con nombres diferentes.
+
+
+
+-- Parte 1, SQL dinamico con EXECUTE IMMEDIATE, es la forma mas sencilla de ejecutar sentencias SQL dinámicas,
+-- se utiliza para ejecutar sentencias SQL que no devuelven resultados, como INSERT, UPDATE, DELETE, etc, 
+-- pero no se puede utilizar para ejecutar sentencias SQL que devuelven resultados, como SELECT, para eso se debe utilizar el paquete DBMS_SQL.
+
+-- Se debe colocar el authid current_user, para que el procedimiento se ejecute con los privilegios del usuario que lo ejecuta, 
+-- y no con los privilegios del propietario del procedimiento, esto es importante para evitar problemas de seguridad,
+-- ya que si el procedimiento se ejecuta con los privilegios del propietario, puede acceder a objetos que el usuario que lo ejecuta no tiene permisos para acceder.
+-- Esto esta habilitado desde la version 12c, antes de esa version, el procedimiento se ejecutaba con los privilegios del propietario,
+-- lo que generaba problemas de seguridad, por eso es importante colocar el authid current_user, para evitar estos problemas de seguridad.
+
+CREATE OR REPLACE PROCEDURE CREAR_TABLA(NOMBRE_TABLA VARCHAR2,COLUMNAS VARCHAR2) AUTHID CURRENT_USER
+IS
+
+BEGIN
+   EXECUTE IMMEDIATE 'CREATE TABLE ' ||NOMBRE_TABLA ||'(' ||COLUMNAS||')';
+END;
+/
+
+EXECUTE hr.CREAR_TABLA('PRUEBA','CODIGO NUMBER, DATOS VARCHAR2(100)');
+
+
+-- Parte 2, Otra forma de hacerlo, es construyendo la sentencia SQL en una variable, y 
+-- luego ejecutando esa variable con EXECUTE IMMEDIATE, esto permite tener una mayor flexibilidad, 
+-- ya que se pueden construir sentencias SQL dinámicas mas complejas, con condiciones, bucles, etc, y luego ejecutarlas con EXECUTE IMMEDIATE.
+CREATE OR REPLACE PROCEDURE CREAR_TABLA1(NOMBRE_TABLA VARCHAR2,COLUMNAS VARCHAR2) AUTHID CURRENT_USER
+IS
+COMANDO VARCHAR2(100);
+BEGIN
+   COMANDO:='CREATE TABLE ' ||NOMBRE_TABLA ||'(' ||COLUMNAS||')';
+   DBMS_OUTPUT.PUT_LINE(COMANDO);
+   EXECUTE IMMEDIATE COMANDO;
+END;
+/
+
+SET SERVEROUTPUT ON
+EXECUTE CREAR_TABLA1('PRU3','CODIGO NUMBER, DATOS VARCHAR2(100)');
+
+
+-- Execute inmediate con comandos DML Parte 1
+
+--EXECUTE IMMEDIATE cadena
+INSERT INTO PRU1 VALUES (1,'DATO1');
+INSERT INTO PRU1 VALUES (2,'DATO2');
+INSERT INTO PRU1 VALUES (3,'DATO3');
+
+-- Funcion que borra los datos de la tabla PRU1, y devuelve el numero de filas borradas, utilizando EXECUTE IMMEDIATE
+-- para ejecutar el comando DELETE, y SQL%ROWCOUNT para obtener el numero de filas borradas.
+   
+CREATE OR REPLACE function EJEMPLO_DML 
+RETURN NUMBER
+AUTHID CURRENT_USER --DEFINER
+IS
+   COMANDO VARCHAR2(100);
+   FILAS NUMBER;
+BEGIN
+   COMANDO:='DELETE FROM PRU1';
+   DBMS_OUTPUT.PUT_LINE(COMANDO);
+   EXECUTE IMMEDIATE COMANDO;
+   FILAS:=SQL%ROWCOUNT;
+   RETURN FILAS;
+END;
+/
+
+BEGIN
+      DBMS_OUTPUT.PUT_LINE('SE HAN BORRADO ' ||EJEMPLO_DML||' FILAS');
+
+END;
+/
+
+-- Excecute inmediate con comandos DML Parte 2, con una condicion para borrar solo los datos que cumplan esa condicion, y devolver el numero de filas borradas.
+
+--EXECUTE IMMEDIATE cadena
+INSERT INTO PRU1 VALUES (1,'DATO1');
+INSERT INTO PRU1 VALUES (2,'DATO2');
+INSERT INTO PRU1 VALUES (3,'DATO3');
+
+CREATE OR REPLACE FUNCTION EJEMPLO_DML(CONDICION VARCHAR2)
+RETURN NUMBER
+AUTHID CURRENT_USER
+IS
+    COMANDO VARCHAR2(100);
+    FILAS NUMBER;
+BEGIN
+    COMANDO:='DELETE FROM PRU1 WHERE '||CONDICION;
+    DBMS_OUTPUT.PUT_LINE(COMANDO);
+    EXECUTE IMMEDIATE(COMANDO);
+    FILAS:=SQL%ROWCOUNT;
+    RETURN FILAS;
+END;
+/
+
+DECLARE
+   CONDICION VARCHAR2(100);
+   NUM_FILAS NUMBER;
+BEGIN
+    CONDICION:='CODIGO=1';
+    NUM_FILAS:=EJEMPLO_DML(CONDICION);
+    DBMS_OUTPUT.PUT_LINE('SE HAN BORRADO '||NUM_FILAS||' FILAS');
+END;
+/
+
+
+-- Clausula INTO y USING
+
+-- Into, son las variables donde se van a almacenar los resultados de la consulta, 
+-- cuando se ejecuta una sentencia SQL que devuelve resultados, como un SELECT, 
+-- se deben utilizar variables para almacenar esos resultados, y esas variables
+-- se indican con la clausula INTO, para que el resultado de la consulta se almacene en esas variables.
+
+-- Using, son las variables que se utilizan para pasar valores a la consulta, 
+-- cuando se ejecuta una sentencia SQL que tiene condiciones, como un WHERE,
+-- se deben utilizar variables para pasar esos valores a la consulta, y esas variables se indican con
+
+CREATE OR REPLACE FUNCTION NUM_EMPLE(DEPARTAMENTO NUMBER)
+RETURN NUMBER
+IS  
+    COMANDO VARCHAR2(200);
+    NUM_EMPLEADOS NUMBER;
+BEGIN
+    COMANDO:='SELECT COUNT(*) FROM EMPLOYEES WHERE DEPARTMENT_ID=:DEPARTAMENTO';
+    EXECUTE IMMEDIATE COMANDO INTO NUM_EMPLEADOS USING DEPARTAMENTO;
+    RETURN NUM_EMPLEADOS;
+END;
+/
+    
+DECLARE
+    DEPART NUMBER;
+    EMPLE NUMBER;
+BEGIN
+    DEPART:=100;
+    EMPLE:=NUM_EMPLE(DEPART);
+    DBMS_OUTPUT.PUT_LINE('HAY '||EMPLE ||' EMPLEADOS EN EL DEPARTAMENTO '|| DEPART);
+END;
+/
+
+-- BULK COLLECT, Carga masiva de filas
+-- Es una forma de cargar grandes cantidades de datos en una variable, utilizando la clausula BULK COLLECT,
+-- esto permite mejorar el rendimiento, ya que se carga toda la información de una sola vez, en lugar de cargarla fila por fila, como se hace con un cursor normal.
+-- Se utiliza con la clausula INTO, para indicar la variable donde se van a almacenar los resultados
+
+DECLARE 
+  -- CREAR UN TIPO
+  TYPE EMPLE_TYPE IS RECORD
+  (
+    NOMBRE_COMPLETO VARCHAR2(100),
+    SALARIO NUMBER,
+    IMPUESTOS NUMBER
+    );
+    
+  -- CREAR TABLE INDEX TABLE 
+  TYPE EMPLEADO IS TABLE OF EMPLE_TYPE INDEX BY PLS_INTEGER;
+  
+  EMPLEADOS EMPLEADO;
+  CONDICION NUMBER;
+  COMANDO VARCHAR2(1000);
+BEGIN
+    CONDICION:=5000;
+
+    -- Construimos la consulta SQL dinámica, utilizando la variable CONDICION para filtrar los resultados, 
+    --y luego ejecutamos esa consulta con EXECUTE IMMEDIATE, 
+    -- utilizando la clausula BULK COLLECT INTO para cargar los resultados en la variable EMPLEADOS.
+
+    -- El q, es una forma de escribir cadenas de texto sin tener que escapar las comillas simples,
+
+    COMANDO:=q'[ SELECT FIRST_NAME ||' '|| LAST_NAME,SALARY, SALARY*15/100 FROM EMPLOYEES
+               WHERE SALARY> :CONDICION ORDER BY SALARY DESC]';
+    EXECUTE IMMEDIATE COMANDO BULK COLLECT INTO EMPLEADOS USING  CONDICION;
+    
+    FOR X IN 1..EMPLEADOS.COUNT()
+    LOOP
+        DBMS_OUTPUT.PUT_LINE(EMPLEADOS(X).NOMBRE_COMPLETO||' '||EMPLEADOS(X).SALARIO||' '||EMPLEADOS(X).IMPUESTOS);
+    END LOOP;
+END;
+/
+
+-- OPEN-FETCH-CLOSE, es una forma de ejecutar sentencias SQL dinámicas que devuelven resultados, 
+-- como un SELECT, utilizando cursores dinámicos, esto permite tener una mayor flexibilidad, 
+-- ya que se pueden construir sentencias SQL dinámicas mas complejas, con condiciones, bucles, etc, y luego ejecutarlas con OPEN-FETCH-CLOSE.        
+
+
+DECLARE 
+  -- CREAR UN TIPO
+  TYPE EMPLE_TYPE IS RECORD
+  (
+    NOMBRE_COMPLETO VARCHAR2(100),
+    SALARIO NUMBER,
+    IMPUESTOS NUMBER
+    );
+    
+  -- CREAR TABLE INDEX TABLE 
+  TYPE EMPLEADO IS TABLE OF EMPLE_TYPE INDEX BY PLS_INTEGER;
+  
+  EMPLEADOS EMPLEADO;
+  CONDICION NUMBER;
+  COMANDO VARCHAR2(1000);
+  
+  --CREAMOS UN REF CURSOR
+  TYPE V_CURSOR IS REF CURSOR;
+  C1 V_CURSOR;
+  
+BEGIN
+    CONDICION:=5000;
+    COMANDO:=q'[ SELECT FIRST_NAME ||' '|| LAST_NAME,SALARY, SALARY*15/100 FROM EMPLOYEES
+               WHERE SALARY> :CONDICION ORDER BY SALARY DESC]';
+    OPEN C1 FOR COMANDO USING CONDICION;
+    FETCH C1 BULK COLLECT INTO EMPLEADOS ;
+    
+    FOR X IN 1..EMPLEADOS.COUNT()
+    LOOP
+        DBMS_OUTPUT.PUT_LINE(EMPLEADOS(X).NOMBRE_COMPLETO||' '||EMPLEADOS(X).SALARIO||' '||EMPLEADOS(X).IMPUESTOS);
+    END LOOP;
+END;
+/
+
+-- DMBS_SQL, es un paquete que permite ejecutar sentencias SQL dinámicas, como una alternativa a EXECUTE IMMEDIATE,
+-- este paquete es mas complejo de utilizar que EXECUTE IMMEDIATE, pero permite tener un mayor control sobre la ejecución 
+-- de las sentencias SQL dinámicas, como por ejemplo, manejar errores, obtener el número de filas afectadas, etc. 
+
+
+-- Cuando usar el paquete DBMS_SQL y cuando usar EXECUTE IMMEDIATE, se recomienda utilizar 
+-- EXECUTE IMMEDIATE para sentencias SQL dinámicas simples, como INSERT, UPDATE, DELETE, etc,
+-- y utilizar el paquete DBMS_SQL para sentencias SQL dinámicas mas complejas, como SELECT,
+-- que devuelven resultados, o cuando se necesita un mayor control sobre la ejecución de las sentencias SQL dinámicas, 
+-- como manejar errores, obtener el número de filas afectadas, etc.    
+
+
+
+
+-- OPEN-PARSE-EXCUTE-FETCH-CLOSE, es una forma de ejecutar sentencias SQL dinámicas utilizando el paquete DBMS_SQL,
+-- esto permite tener un mayor control sobre la ejecución de las sentencias SQL dinámicas, como por ejemplo,
+-- manejar errores, obtener el número de filas afectadas, etc.
+
+CREATE OR REPLACE PROCEDURE CREAR_TABLA(TABLA VARCHAR2, COLUMNAS VARCHAR2)
+AUTHID CURRENT_USER
+IS
+    ID_CURSOR INTEGER;
+    NUM_FILAS INTEGER;
+BEGIN
+    ID_CURSOR:=DBMS_SQL.OPEN_CURSOR;
+    -- CREATE TABLE T1 ( CODIGO NUMBER )
+    DBMS_SQL.PARSE(ID_CURSOR, 'CREATE TABLE '||TABLA||'('||COLUMNAS||')',DBMS_SQL.NATIVE);
+    NUM_FILAS:=DBMS_SQL.EXECUTE(ID_CURSOR);
+    DBMS_SQL.CLOSE_CURSOR(ID_CURSOR);
+    DBMS_OUTPUT.PUT_LINE(NUM_FILAS);
+END;
+/
+
+BEGIN
+    CREAR_TABLA('T1','CODIGO NUMBER, DATOS VARCHAR2(100)');
+END;
+/
+
+DESC T1;
+
+
+-- BIND_VARIABLES, es una forma de pasar variables a las sentencias SQL dinámicas, utilizando el paquete DBMS_SQL, 
+-- esto permite tener una mayor flexibilidad, ya que se pueden construir sentencias SQL dinámicas mas comple
+
+CREATE TABLE REGIONES AS SELECT * FROM REGIONS;
+/
+
+SELECT * FROM REGIONES;
+/
+
+CREATE OR REPLACE PROCEDURE MOD_COLUMNA(TABLA VARCHAR2,COLUMNA VARCHAR2, VALOR_ANTIGUO VARCHAR2, VALOR_NUEVO VARCHAR2)
+AUTHID CURRENT_USER
+
+IS
+--VARIABLE PAR5A ALBERGAR EL IDE DEL CURSOR
+ID_CURSOR INTEGER;
+NUM_FILAS NUMBER;
+
+BEGIN
+  ID_CURSOR:=DBMS_SQL.OPEN_CURSOR;
+  DBMS_SQL.PARSE(ID_CURSOR,'UPDATE ' ||TABLA ||' SET '||COLUMNA||'=:VALOR_NUEVO WHERE '||COLUMNA||'=:VALOR_ANTIGUO',DBMS_SQL.NATIVE);
+  DBMS_SQL.BIND_VARIABLE(ID_CURSOR,':VALOR_ANTIGUO',VALOR_ANTIGUO);
+  DBMS_SQL.BIND_VARIABLE(ID_CURSOR,':VALOR_NUEVO',VALOR_NUEVO);
+
+  NUM_FILAS:=DBMS_SQL.EXECUTE(ID_CURSOR);
+  DBMS_SQL.CLOSE_CURSOR(ID_CURSOR);
+  DBMS_OUTPUT.PUT_LINE(NUM_FILAS||' MODIFICADAS');
+END;
+/
+
+EXECUTE MOD_COLUMNA('REGIONES','REGION_NAME','Asia','ASIA');
+
+
+-- BIND_ARRAY, es una forma de pasar arrays de variables a las sentencias SQL dinámicas, utilizando el paquete DBMS_SQL,
+-- esto permite tener una mayor flexibilidad, ya que se pueden construir sentencias SQL dinámicas mas complejas, 
+-- con condiciones, bucles, etc, y luego ejecutarlas con el paquete DBMS_SQL, utilizando arrays de variables para pasar los valores a las sentencias SQL dinámicas.   
+
+--BIND_ARRAY
+DECLARE
+    ID_CURSOR INTEGER;
+    NUM_FILAS INTEGER;
+
+    CODIGOS DBMS_SQL.NUMBER_TABLE;  --
+    REGIONES DBMS_SQL.VARCHAR2_TABLE;
+BEGIN
+    CODIGOS(1):=10;
+    CODIGOS(2):=20;
+    CODIGOS(3):=30;
+    REGIONES(1):='AUSTRALIA';
+    REGIONES(2):='ANTARTIDA';
+    REGIONES(3):='NUEVA ZELANDA';
+    
+    ID_CURSOR:=DBMS_SQL.OPEN_CURSOR;
+    DBMS_SQL.PARSE(ID_CURSOR, 'INSERT INTO REGIONES VALUES (:COD,:REG)', DBMS_SQL.NATIVE);
+    
+    DBMS_SQL.BIND_ARRAY(ID_CURSOR,':COD',CODIGOS);
+    DBMS_SQL.BIND_ARRAY(ID_CURSOR,':REG',REGIONES);
+    
+    NUM_FILAS:=DBMS_SQL.EXECUTE(ID_CURSOR);
+    DBMS_SQL.CLOSE_CURSOR(ID_CURSOR);
+END;
+/
+
+SELECT * FROM REGIONES;
+     
+
+
+-- SELECTS, es una forma de ejecutar sentencias SQL dinámicas que devuelven resultados, como un SELECT, utilizando el paquete DBMS_SQL,
+
+
+-- Parte 1, DEFINE_COLUMN, es una forma de definir las columnas que se van a devolver en la consulta,
+-- utilizando el paquete DBMS_SQL, esto permite tener una mayor flexibilidad, ya que se pueden construir sentencias SQL dinámicas mas complejas,
+--con condiciones, bucles, etc, y luego ejecutarlas con el paquete DBMS_SQL, utilizando DEFINE_COLUMN para definir las columnas que se van a devolver en la consulta.
+
+CREATE OR REPLACE FUNCTION BUSCAR_EMPLEADO(CODIGO NUMBER)
+RETURN VARCHAR2
+IS
+    ID_CURSOR INTEGER;
+    NUM_FILAS INTEGER;
+    NOMBRE VARCHAR2(100);
+BEGIN
+
+    ID_CURSOR:=DBMS_SQL.OPEN_CURSOR;
+    DBMS_SQL.PARSE(ID_CURSOR, 'SELECT FIRST_NAME,SALARY FROM EMPLOYEES WHERE EMPLOYEE_ID= :COD', DBMS_SQL.NATIVE);
+
+    -- (el id del cursor, el numero de la columna, la variable donde se va a almacenar el resultado entonces se esta indicando que 
+    -- el tipo de esa variables es la que se espera, el tamaño de la variable)
+    DBMS_SQL.DEFINE_COLUMN(ID_CURSOR, 1, NOMBRE, 20);
+    
+    DBMS_SQL.BIND_VARIABLE(ID_CURSOR,':COD',CODIGO);
+    
+    NUM_FILAS:=DBMS_SQL.EXECUTE(ID_CURSOR);
+    IF DBMS_SQL.FETCH_ROWS(ID_CURSOR) = 0 THEN
+        RETURN 'NO EXISTE EL EMPLEADO';
+    END IF;
+    DBMS_SQL.COLUMN_VALUE(ID_CURSOR, 1, NOMBRE);
+    DBMS_SQL.CLOSE_CURSOR(ID_CURSOR);
+    RETURN NOMBRE;
+END;
+/
+
+
+SET SERVEROUTPUT ON
+BEGIN
+   DBMS_OUTPUT.PUT_LINE(BUSCAR_EMPLEADO(0));
+END;
+
+
+-- Parte 2, con un bucle para devolver todos los empleados que cumplan la condicion, utilizando el paquete DBMS_SQL,
+
+CREATE OR REPLACE PROCEDURE BUSCAR_EMPLEADO1(SALARIO NUMBER)
+IS
+    ID_CURSOR INTEGER;
+    NUM_FILAS INTEGER;
+    NOMBRE VARCHAR2(100);
+    APELLIDO VARCHAR2(100);
+BEGIN
+
+    ID_CURSOR:=DBMS_SQL.OPEN_CURSOR;
+    DBMS_SQL.PARSE(ID_CURSOR, 'SELECT FIRST_NAME,LAST_NAME FROM EMPLOYEES WHERE SALARY > :SALARIO', DBMS_SQL.NATIVE);
+    DBMS_SQL.DEFINE_COLUMN(ID_CURSOR, 1, NOMBRE, 20);
+    DBMS_SQL.DEFINE_COLUMN(ID_CURSOR, 2, APELLIDO, 20);
+    
+    DBMS_SQL.BIND_VARIABLE(ID_CURSOR,':SALARIO',SALARIO);
+    
+    NUM_FILAS:=DBMS_SQL.EXECUTE(ID_CURSOR);
+    
+    LOOP
+        IF DBMS_SQL.FETCH_ROWS(ID_CURSOR) = 0 THEN
+            EXIT;
+        END IF;
+    
+        DBMS_SQL.COLUMN_VALUE(ID_CURSOR, 1, NOMBRE);
+        DBMS_SQL.COLUMN_VALUE(ID_CURSOR, 2, APELLIDO);
+        DBMS_OUTPUT.PUT_LINE('NOMBRE:'||NOMBRE||' Y EL APELLIDO ES '||APELLIDO);
+    END LOOP;
+        
+    DBMS_SQL.CLOSE_CURSOR(ID_CURSOR);
+END;
+/
+
+
+SET SERVEROUTPUT ON
+BEGIN
+   BUSCAR_EMPLEADO1(5000);
+END;
+
 
 
 
