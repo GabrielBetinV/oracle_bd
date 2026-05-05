@@ -1267,7 +1267,6 @@ NESTED TABLE REGIONES STORE AS TABLA_REGIONES;
 
 
 
--- Desde aca
 
 -- LOBS, Large objects
 -- Son objetos que pueden almacenar grandes cantidades de datos, como texto, imágenes, videos, etc.
@@ -2264,7 +2263,6 @@ SET SERVEROUTPUT ON
 BEGIN
    BUSCAR_EMPLEADO1(5000);
 END;
-
 
 
 
