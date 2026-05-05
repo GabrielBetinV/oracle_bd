@@ -2268,5 +2268,125 @@ END;
 
 
 
+-- RESULT CACHING, es una forma de almacenar los resultados de una consulta en memoria, para evitar tener que ejecutar
+-- la consulta cada vez que se necesitan esos resultados, esto permite mejorar el rendimiento, ya que se evita tener que 
+-- ejecutar la consulta cada vez que se necesitan esos resultados, y se pueden obtener esos resultados de manera mas rápida, ya que se almacenan en memoria.    
+
+
+--Configurar el tamaño de la Result Cache, para que se pueda utilizar la Result Cache, es necesario configurar 
+--el tamaño de la Result Cache, esto se puede configurar a nivel de base de datos, utilizando el parámetro RESULT_CACHE_MAX_SIZE,
+--este parámetro indica el tamaño máximo de la Result Cache, en bytes, si se establece en 0, la Result Cache no se utiliza, y si se establece en un valor mayor a 0, la Result Cache se utiliza, y se pueden almacenar resultados en memoria hasta alcanzar ese tamaño máximo.
+
+SHOW PARAMETER CACHE
+
+SHOW SGA
+
+SELECT NAME,VALUE FROM V$PARAMETER WHERE NAME LIKE '%cache%';
+
+ALTER SYSTEM SET RESULT_CACHE_MAX_SIZE=100M; 
+
+
+-- Configurar el modo de la Result Cache, para que se utilice en todas las consultas, o solo en las consultas que se indiquen, 
+-- esto se puede configurar a nivel de base de datos, a nivel de sesión o a nivel de consulta.
+
+-- Hay manual  y force, manual es para que se utilice solo en las consultas que se indiquen, utilizando la clausula RESULT_CACHE,
+--  y force es para que se utilice en todas las consultas, sin necesidad de utilizar la clausula RESULT_CACHE.
+
+SHOW PARAMETER CACHE
+
+SHOW SGA
+
+SELECT NAME,VALUE FROM V$PARAMETER WHERE NAME LIKE '%result_cache%';
+
+ALTER SYSTEM SET RESULT_CACHE_MAX_SIZE=100M; 
+
+ALTER SYSTEM SET RESULT_CACHE_MODE='FORCE';
+
+ALTER SYSTEM SET RESULT_CACHE_MODE='MANUAL';
+
+-- paquete DBMS_RESULT_CACHE, es un paquete que permite controlar la Result Cache, como por ejemplo, 
+-- limpiar la Result Cache, obtener información sobre la Result Cache, etc.
+
+
+--DBMS_RESULT_CACHE
+
+SET SERVEROUTPUT ON
+
+BEGIN
+    DBMS_OUTPUT.PUT_LINE( DBMS_RESULT_CACHE.STATUS);
+    DBMS_RESULT_CACHE.MEMORY_REPORT;
+
+    -- este comando limpia la Result Cache, es decir, elimina todos los resultados almacenados en la Result Cache, 
+    -- esto puede ser útil para liberar espacio en memoria, o para eliminar resultados que ya no son necesarios.
+    DBMS_RESULT_CACHE.FLUSH;
+END;
+/
+
+-- HINT RESULT_CACHE, es una forma de indicar que se deben almacenar los resultados de una consulta en la Result Cache, 
+-- utilizando la cláusula RESULT_CACHE, esto permite tener una mayor flexibilidad, ya que se pueden construir sentencias SQL
+-- dinámicas mas complejas, con condiciones, bucles, etc, y luego ejecutarlas con la cláusula RESULT_CACHE para almacenar los resultados en la Result Cache.
+
+-- Con este hint, se le esta indicando a la base de datos que se deben almacenar los resultados de esta consulta en la Result Cache,
+-- esto permite que la próxima vez que se ejecute esta consulta, se obtengan los resultados
+
+SELECT /*+ RESULT_CACHE */  AVG(SALARY)
+FROM EMPLOYEES;
+
+
+SELECT /*+ RESULT_CACHE*/  * FROM EMPLOYEES;
+
+
+-- Comprobar la RESULT_CACHE, para comprobar si una consulta esta utilizando la Result Cache, 
+-- se puede utilizar la vista V$RESULT_CACHE_STATISTICS, esta vista muestra información
+--  sobre el uso de la Result Cache, como el número de consultas que han utilizado la Result Cache, el número de resultados almacenados en la Result Cache, etc.
+
+
+SELECT * FROM V$RESULT_CACHE_STATISTICS;
+
+select * from table(dbms_xplan.display_cursor(sql_id=>'08hvxxy2cmcqa', format=>'ALLSTATS LAST'));
+
+SELECT * FROM V$RESULT_CACHE_OBJECTS WHERE CACHE_ID='gmr0u86vu0hnu8xyq7mak3txkp';
+
+
+
+
+-- Result_cache en PL/SQL, es una forma de almacenar los resultados de una consulta en la Result Cache,
+--  utilizando el paquete DBMS_RESULT_CACHE, esto permite tener una mayor flexibilidad, 
+-- ya que se pueden construir sentencias SQL dinámicas mas complejas, con condiciones, bucles, etc, 
+-- y luego ejecutarlas con el paquete DBMS_RESULT_CACHE para almacenar los resultados en la Result Cache.
+
+CREATE OR REPLACE FUNCTION CONTAR_EMPLEADOS (DEPARTMENTO NUMBER)
+RETURN NUMBER
+RESULT_CACHE RELIES_ON (EMPLOYEES)
+IS
+    NUM_EMPLE NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO NUM_EMPLE FROM EMPLOYEES WHERE DEPARTMENT_ID=DEPARTMENTO;
+    RETURN NUM_EMPLE;
+END;
+/
+
+SELECT DEPARTMENT_NAME,CONTAR_EMPLEADOS(DEPARTMENT_ID) FROM DEPARTMENTS WHERE DEPARTMENT_ID> 5;
+
+
+-- Result-cache en funciones con parámetros, es una forma de almacenar los resultados de una función en la Result Cache, utilizando el paquete DBMS_RESULT_CACHE,
+-- esto permite tener una mayor flexibilidad, ya que se pueden construir funciones con parámetros, y
+-- luego ejecutarlas con el paquete DBMS_RESULT_CACHE para almacenar los resultados en la Result Cache, esto permite que la próxima vez que se ejecute esta función con los mismos parámetros, se obtengan los resultados de manera mas rápida, ya que se almacenan en memoria.
+
+CREATE OR REPLACE FUNCTION CONTAR_EMPLEADOS (DEPARTMENTO NUMBER)
+RETURN NUMBER
+RESULT_CACHE RELIES_ON (EMPLOYEES)
+IS
+    NUM_EMPLE NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO NUM_EMPLE FROM EMPLOYEES WHERE DEPARTMENT_ID=DEPARTMENTO;
+    RETURN NUM_EMPLE;
+END;
+/
+
+SELECT DEPARTMENT_NAME,CONTAR_EMPLEADOS(DEPARTMENT_ID) FROM DEPARTMENTS WHERE DEPARTMENT_ID> 5;
+
+
+
 
 
