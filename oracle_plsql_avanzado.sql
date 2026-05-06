@@ -2388,5 +2388,142 @@ SELECT DEPARTMENT_NAME,CONTAR_EMPLEADOS(DEPARTMENT_ID) FROM DEPARTMENTS WHERE DE
 
 
 
+-- DBMS_TRACE, es un paquete que permite trazar la ejecución de sentencias SQL, procedimientos, funciones, 
+-- etc, esto permite tener una mayor visibilidad sobre la ejecución de las sentencias SQL, procedimientos,
+-- funciones, etc, y poder identificar posibles problemas de rendimiento, errores, etc.
+
+
+-- Crear las tablas para DBMS_TRACE
+-- Ver el video, con el script para crear las tablas necesarias para utilizar el paquete DBMS_TRACE, estas tablas se utilizan para almacenar la información del trazado, como el nombre del procedimiento, la línea de código, el tiempo de ejecución, etc.
+-- Hay que validar si la base de datos es CDB o PDB, para crear las tablas en el contenedor correcto,
+-- ya que si se crean en el contenedor incorrecto, no se podrán utilizar para trazar la ejecución de los procedimientos, funciones, etc.
+
+-- CDB, es un contenedor de base de datos, que permite tener varias bases de datos dentro de un mismo contenedor,
+-- esto permite tener una mayor flexibilidad, ya que se pueden crear varias bases de datos dentro de un mismo contenedor, 
+-- y cada base de datos puede tener sus propios procedimientos, funciones, etc, sin interferir con las demás bases de datos.
+
+
+-- PDB, es una base de datos pluggable, que se puede conectar y desconectar del contenedor,
+-- esto permite tener una mayor flexibilidad, ya que se pueden conectar y desconectar las bases de datos pluggable según sea necesario,
+-- sin afectar a las demás bases de datos dentro del contenedor.
+
+
+-- Las versiones de Oracle Database a partir de la 12c, permiten utilizar el paquete DBMS_TRACE en bases de datos 
+--CDB y PDB, pero es importante validar en qué contenedor se están creando las tablas necesarias para utilizar
+-- el paquete DBMS_TRACE, para evitar problemas al trazar la ejecución de los procedimientos, funciones, etc.
+
+-- En la version 11 G, el paquete DBMS_TRACE solo se puede utilizar en bases de datos no CDB, es decir, en bases de datos tradicionales,
+-- por lo que si se intenta utilizar el paquete DBMS_TRACE en una base de datos CDB, se generará un error, ya que el paquete DBMS_TRACE no esta disponible en bases de datos CDB, 
+-- por eso es importante validar la versión de la base de datos y el tipo de contenedor antes de intentar utilizar el paquete DBMS_TRACE.  
+
+
+--  Configurar PL/SQL para debug, para poder utilizar el paquete DBMS_TRACE, 
+--es necesario configurar PL/SQL para debug, esto se puede hacer a nivel de base de datos, 
+--a nivel de sesión o a nivel de procedimiento, función, paquete, etc, utilizando la opción COMPILE 
+--DEBUG al compilar el código PL/SQL, esto permite que se almacene información adicional en la base de datos, 
+--como el número de línea de código, el nombre del procedimiento, etc, lo que permite tener una mayor visibilidad sobre la ejecución del código PL/SQL.
+
+
+CREATE OR REPLACE PROCEDURE PROC1
+IS
+    V NUMBER:=0;
+BEGIN
+    DBMS_OUTPUT.PUT_LINE(V);
+    SELECT COUNT(*) INTO V FROM EMPLOYEES;
+    DBMS_OUTPUT.PUT_LINE(V);
+END;
+/
+
+ALTER PROCEDURE PROC1 COMPILE DEBUG;
+
+SELECT * FROM USER_PLSQL_OBJECT_SETTINGS WHERE NAME='PROC1';
+
+ALTER PROCEDURE PROC1 COMPILE;
+
+-- Tipos de trazas, hay varios tipos de trazas que se pueden utilizar con el paquete DBMS_TRACE, como por ejemplo,
+-- TRACE_LEVEL_CALLS, para trazar las llamadas a procedimientos, funciones, etc,
+-- TRACE_LEVEL_STATEMENT, para trazar las sentencias SQL que se ejecutan dentro de los procedimientos, funciones, etc,
+-- TRACE_LEVEL_ERRORS, para trazar los errores que se generan durante la ejecución de los procedimientos, funciones, etc,
+-- TRACE_LEVEL_ALL, para trazar todo lo anterior, es decir, las llamadas a procedimientos, funciones, etc, las sentencias SQL que se ejecutan dentro de los procedimientos, funciones, etc, y los errores que se generan durante la ejecución de los procedimientos, funciones, etc.    
+
+
+-- CALLS
+-- TRACE_ALL_CALLS, es una forma de trazar las llamadas a procedimientos, funciones, etc, utilizando el paquete DBMS_TRACE, esto permite tener una mayor visibilidad sobre las llamadas a procedimientos, funciones, etc, y poder identificar posibles problemas de rendimiento, errores, etc.
+-- TRACE_ENABLED_CALLS, es una forma de habilitar el trazado de las llamadas a procedimientos, funciones, etc, utilizando el paquete DBMS_TRACE, esto permite tener una mayor visibilidad sobre las llamadas a procedimientos, funciones, etc, y poder identificar posibles problemas de rendimiento, errores, etc.
+
+
+--EXCEPTIONS
+-- TRACE_ALL_EXCEPTIONS, es una forma de trazar los errores que se generan durante la ejecución de los procedimientos, funciones, etc, utilizando el paquete DBMS_TRACE, esto permite tener una mayor visibilidad sobre los errores que se generan durante la ejecución de los procedimientos, funciones, etc, y poder identificar posibles problemas de rendimiento, errores, etc.
+-- TRACE_ENABLED_EXCEPTIONS, es una forma de habilitar el trazado de los errores
+
+--SQL
+-- TRACE_ALL_SQL, es una forma de trazar las sentencias SQL que se ejecutan dentro de los procedimientos, funciones, etc, utilizando el paquete DBMS_TRACE, esto permite tener una mayor visibilidad sobre las sentencias SQL que se ejecutan dentro de los procedimientos, funciones, etc, y poder identificar posibles problemas de rendimiento, errores, etc.
+-- TRACE_ENABLED_SQL, es una forma de habilitar el trazado de las sentencias SQL que se ejecutan dentro de los procedimientos, funciones, etc, utilizando el paquete DBMS_TRACE, esto permite tener una mayor visibilidad sobre las sentencias SQL que se ejecutan dentro de los procedimientos, funciones, etc, y poder identificar posibles problemas de rendimiento, errores, etc.
+
+-- LINES
+-- TRACE_ALL_LINES, es una forma de trazar las líneas de código que se ejecutan dentro de los procedimientos, funciones, etc, utilizando el paquete DBMS_TRACE, esto permite tener una mayor visibilidad sobre las líneas de código que se ejecutan dentro de los procedimientos, funciones, etc, y poder identificar posibles problemas de rendimiento, errores, etc.
+-- TRACE_ENABLED_LINES, es una forma de habilitar el trazado de las líneas de código que se ejecutan dentro de los procedimientos, funciones, etc, utilizando el paquete DBMS_TRACE, esto permite tener una mayor visibilidad sobre las líneas de código que se ejecutan dentro de los procedimientos, funciones, etc, y poder identificar posibles problemas de rendimiento, errores, etc.
+
+
+-- Activar y ejecutar la traza
+
+CREATE OR REPLACE PROCEDURE PROC1
+IS
+    V NUMBER:=0;
+BEGIN
+    DBMS_OUTPUT.PUT_LINE(V);
+    SELECT COUNT(*) INTO V FROM EMPLOYEES;
+    DBMS_OUTPUT.PUT_LINE(V);
+END;
+/
+
+SELECT * FROM USER_PLSQL_OBJECT_SETTINGS WHERE NAME='PROC1';
+
+ALTER PROCEDURE PROC1 COMPILE;
+ALTER PROCEDURE PROC1 COMPILE DEBUG;
+
+EXECUTE DBMS_TRACE.SET_PLSQL_TRACE(DBMS_TRACE.TRACE_ENABLED_SQL+DBMS_TRACE.TRACE_ALL_CALLS);
+
+EXECUTE PROC1;
+
+EXECUTE DBMS_TRACE.CLEAR_PLSQL_TRACE;
+
+
+-- Comprobar el resultado de la traza
+
+REATE OR REPLACE PROCEDURE PROC1
+IS
+    V NUMBER:=0;
+BEGIN
+    DBMS_OUTPUT.PUT_LINE(V);
+    SELECT COUNT(*) INTO V FROM EMPLOYEES;
+    DBMS_OUTPUT.PUT_LINE(V);
+    NULL;
+    SELECT SUM(SALARY) INTO V FROM EMPLOYEES GROUP BY DEPARTMENT_ID;
+END;
+/
+
+
+
+SELECT * FROM USER_PLSQL_OBJECT_SETTINGS WHERE NAME='PROC1';
+
+ALTER PROCEDURE PROC1 COMPILE;
+ALTER PROCEDURE PROC1 COMPILE DEBUG;
+
+EXECUTE DBMS_TRACE.SET_PLSQL_TRACE(DBMS_TRACE.TRACE_ENABLED_SQL+DBMS_TRACE.TRACE_ENABLED_CALLS);
+
+EXECUTE PROC1;
+
+EXECUTE DBMS_TRACE.CLEAR_PLSQL_TRACE;
+
+SELECT * FROM SYS.PLSQL_TRACE_RUNS;
+SELECT * FROM SYS.PLSQL_TRACE_EVENTS;
+SELECT * FROM SYS.PLSQL_TRACE_EVENTS WHERE EVENT_UNIT='PROC1' AND RUNID=4;
+
+
+
+-- Trigger de Esquema y de Base de datos
+
+
 
 
