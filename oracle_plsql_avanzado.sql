@@ -2525,5 +2525,716 @@ SELECT * FROM SYS.PLSQL_TRACE_EVENTS WHERE EVENT_UNIT='PROC1' AND RUNID=4;
 -- Trigger de Esquema y de Base de datos
 
 
+-- Trigger de Esquema y de Base de datos
+
+-- Se disparan a dos niveles,
+--  a nivel de esquema, es decir, cuando se realizan acciones sobre objetos dentro de un esquema, 
+-- como por ejemplo, crear un procedimiento, función, paquete, etc, o modificar un procedimiento, función,
+-- paquete, etc, esto permite tener una mayor flexibilidad y control sobre las acciones que se realizan
+-- dentro de un esquema, ya que se pueden crear triggers para controlar las acciones que se realizan sobre los objetos dentro de un esquema.
+
+-- A nivel de base de datos, es decir, cuando se realizan acciones sobre objetos dentro de una base de datos,
+-- como por ejemplo, crear un procedimiento, función, paquete, etc, o modificar un procedimiento  
+-- función, paquete, etc, esto permite tener una mayor flexibilidad y control sobre las acciones que se realizan
+-- dentro de una base de datos, ya que se pueden crear triggers para controlar las acciones que se realizan sobre los objetos dentro de una base de datos,
+--  sin importar el esquema al que pertenezcan esos objetos. 
+
+-- Triggers de tipo DDL, es una forma de crear triggers que se disparan cuando 
+-- se realizan acciones sobre objetos dentro de un esquema o una base de datos, 
+-- como por ejemplo, crear un procedimiento, función, paquete, etc, o modificar un
+--  procedimiento, función, paquete, etc, esto permite tener una mayor flexibilidad 
+-- y control sobre las acciones que se realizan sobre los objetos dentro de un esquema o
+--  una base de datos, ya que se pueden crear triggers para controlar las acciones que se realizan sobre los objetos dentro de un esquema o una base de datos.
+
+-- Se ejecutan cuando
+
+-- Alter
+-- Create
+-- Drop
+-- Grant
+-- Revoke
+-- Audit
+-- Comment
+-- truncate
+-- DDL
+
+
+-- Crear un tiggre DDL, a nivel de esquema.  
+-- En este ejemplo, se crea un trigger que se dispara cuando se realiza una acción de DROP 
+-- sobre cualquier objeto dentro del esquema, y se inserta un registro en la tabla CONTROL_LOG
+-- con el evento y la fecha en que se realizó esa acción, esto permite tener un control sobre 
+-- las acciones de DROP que se realizan sobre los objetos dentro del esquema, y poder identificar 
+-- posibles problemas de seguridad, errores, etc.
+
+
+CREATE TABLE CONTROL_LOG
+(
+EVENTO VARCHAR2(100),
+FECHA DATE DEFAULT SYSDATE);
+/
+
+CREATE OR REPLACE TRIGGER BORRAR_OBJETO
+AFTER DROP 
+ON SCHEMA
+BEGIN
+    INSERT INTO CONTROL_LOG (EVENTO) VALUES ('HEMOS BORRADO UN OBJETO '||ora_database_name);
+END;
+/
+
+CREATE TABLE P1 (CODIGO NUMBER);
+
+DROP TABLE P1;
+
+SELECT * FROM CONTROL_LOG;
+
+
+-- Atributos para eventos de Triggers
+-- ORA_DICT_OBJ_NAME, es el nombre del objeto sobre el que se ha realizado la acción que ha disparado el trigger, en este caso, el nombre del objeto que se ha borrado.
+-- ORA_DICT_OBJ_TYPE, es el tipo del objeto sobre el que se ha realizado la acción que ha disparado el trigger, en este caso, el tipo del objeto que se ha borrado, como por ejemplo, TABLE, VIEW, PROCEDURE, etc.
+-- ORA_DICT_OBJ_OWNER, es el propietario del objeto sobre el que se ha realizado la acción que ha disparado el trigger, en este caso, el propietario del objeto que se ha borrado, es decir, el esquema al que pertenece ese objeto.            
+-- ORA_SYSEVENT, es el evento que ha disparado el trigger, en este caso, el evento de DROP, que es el evento que se ha realizado sobre el objeto que ha disparado el trigger.
+-- ORA_DATABASE_NAME, es el nombre de la base de datos en la que se ha realizado la acción que ha disparado el trigger, en este caso, el nombre de la base de datos en la que se ha realizado la acción de DROP sobre el objeto que ha disparado el trigger.  
+-- ORA_LOGIN_USAR, es el nombre del usuario que ha realizado la acción que ha disparado el trigger, en este caso, el nombre del usuario que ha realizado la acción de DROP sobre el objeto que ha disparado el trigger.
+-- ORA_HOST_NAME, es el nombre del host desde el que se ha realizado la acción que ha disparado el trigger, en este caso, el nombre del host desde el que se ha realizado la acción de DROP sobre el objeto que ha disparado el trigger.
+-- ORA_SESSION_USER, es el nombre del usuario de la sesión que ha realizado la acción que ha disparado el trigger, en este caso, el nombre del usuario de la sesión que ha realizado la acción de DROP sobre el objeto que ha disparado el trigger.   
+-- ORA_INSTANCE_NUM,  es el número de la instancia en la que se ha realizado la acción que ha disparado el trigger, en este caso, el número de la instancia en la que se ha realizado la acción de DROP sobre el objeto que ha disparado el trigger.
+
+
+CREATE TABLE CONTROL_LOG
+(
+EVENTO VARCHAR2(100),
+FECHA DATE DEFAULT SYSDATE);
+/
+
+CREATE OR REPLACE TRIGGER BORRAR_OBJETO
+AFTER DROP 
+ON SCHEMA
+BEGIN
+    INSERT INTO CONTROL_LOG (EVENTO) VALUES ('HEMOS BORRADO UN OBJETO LLAMADO '||ORA_DICT_OBJ_NAME||' DE TIPO '||ORA_DICT_OBJ_TYPE||' QUE PERTENECE AL USUARIO:'||ORA_DICT_OBJ_OWNER);
+END;
+/
+CREATE TABLE P1 (CODIGO NUMBER);
+
+DROP TABLE P1;
+
+SELECT * FROM CONTROL_LOG;
+
+
+
+-- Triggers DDL a nivel de base de datos, es una forma de crear triggers que se disparan cuando se 
+-- realizan acciones sobre objetos dentro de una base de datos, como por ejemplo, crear un procedimiento,
+-- función, paquete, etc, o modificar un procedimiento, función, paquete, etc, esto permite tener una mayor 
+-- flexibilidad y control sobre las acciones que se realizan sobre los objetos dentro de una base de datos, 
+-- ya que se pueden crear triggers para controlar las acciones que se realizan sobre los objetos dentro de una 
+-- base de datos, sin importar el esquema al que pertenezcan esos objetos.
+
+CREATE TABLE CONTROL_LOG
+(
+EVENTO VARCHAR2(100),
+FECHA DATE DEFAULT SYSDATE);
+/
+
+-----------------------
+
+-- Como system
+CREATE OR REPLACE TRIGGER BORRAR_OBJETO
+AFTER DROP 
+ON DATABASE
+BEGIN
+    INSERT INTO HR.CONTROL_LOG (EVENTO) VALUES ('HEMOS BORRADO UN OBJETO A NIVEL DE DATABASE LLAMADO '||ORA_DICT_OBJ_NAME||' DE TIPO '||ORA_DICT_OBJ_TYPE||' QUE PERTENECE AL USUARIO:'||ORA_DICT_OBJ_OWNER);
+END;
+/
+
+-- Trigger de tipo SYSTEM, es una forma de crear triggers que se disparan cuando se realizan acciones sobre la base de datos, como por ejemplo, iniciar sesión, cerrar sesión, etc, esto permite tener una mayor flexibilidad y control sobre las acciones que se realizan sobre la base de datos, ya que se pueden crear triggers para controlar las acciones que se realizan sobre la base de datos, sin importar el esquema al que pertenezcan esos objetos.
+
+
+-- AFTER STARTUP
+-- BEFORE SHUTDOWN
+-- AFTER SERVERERROR
+-- AFTER LOGON
+-- BEFORE LOGOFF
+-- AFTER SUSPEND
+
+-- Auditar  Logins de usuarios
+
+-- Controlar quien se conecta a la base de datos, desde que host, y cuando se conecta, esto puede ser útil para tener un control sobre los accesos a la base de datos, y poder identificar posibles problemas de seguridad, errores, etc.
+
+
+CREATE TABLE CONTROL_LOGINS
+( 
+USUARIO VARCHAR2(100),
+IP VARCHAR2(100),
+FECHA DATE
+);
+
+/*
+ora_sysevent
+ora_login_user
+ora_instance_num
+ora_database_name
+ora_client_ip_address
+*/
+
+CREATE OR REPLACE TRIGGER LOGIN
+AFTER LOGON
+ON DATABASE
+BEGIN
+    INSERT INTO CONTROL_LOGINS VALUES(ora_login_user,ora_client_ip_address,SYSDATE);
+END;
+/
+
+
+SELECT * FROM CONTROL_LOGINS;
+
+
+-- Controlar errores en la base de datos parte 1
+
+CREATE TABLE CONTROL_ERRORES
+(
+    USUARIO VARCHAR2(100),
+    MENSAJE_ERROR VARCHAR2(100),
+    COMANDO_SQL VARCHAR2(1000),
+    FECHA DATE
+);
+
+/*
+ORA_NAME_LIST_T IS TABLE OF VARCHAR2(64)
+ora_sysevent
+ora_login_user
+ora_instance_num
+ora_database_name
+ora_server_error****
+   ora_server_error_depth
+    ora_server_error_msg (position in binary_integer).
+ora_sql_txt (sql_text out ora_name_list_t)
+ora_is_servererror
+ora_space_error_info
+*/
+
+CREATE OR REPLACE TRIGGER CAPTURAR_ERRORES
+AFTER SERVERERROR
+ON DATABASE
+DECLARE
+    SQL_TEXT ORA_NAME_LIST_T;
+    MENSAJE VARCHAR2(2000):=NULL;
+    COMANDO VARCHAR2(200):=NULL;
+BEGIN
+    FOR X IN 1..ORA_SERVER_ERROR_DEPTH LOOP
+        MENSAJE:=MENSAJE|| ORA_SERVER_ERROR_MSG(X);
+    END LOOP;
+    
+    FOR I IN 1..ORA_SQL_TXT(SQL_TEXT) LOOP
+        COMANDO:=COMANDO||SQL_TEXT(I);
+    END LOOP;
+    INSERT INTO CONTROL_ERRORES VALUES (ORA_LOGIN_USER,MENSAJE, COMANDO,SYSDATE);
+END;
+/
+
+SELECT * FROM XXXXX;
+
+SELECT * FROM CONTROL_ERRORES;
+
+-- Controlar los errores en la Base de datos Parte 2.
+
+CREATE TABLE CONTROL_ERRORES
+(
+    USUARIO VARCHAR2(100),
+    MENSAJE_ERROR VARCHAR2(100),
+    COMANDO_SQL VARCHAR2(1000),
+    FECHA DATE
+);
+
+/*
+ORA_NAME_LIST_T IS TABLE OF VARCHAR2(64)
+ora_sysevent
+ora_login_user
+ora_instance_num
+ora_database_name
+ora_server_error****
+   ora_server_error_depth
+    ora_server_error_msg (position in binary_integer).
+ora_sql_txt (sql_text out ora_name_list_t)
+ora_is_servererror
+ora_space_error_info
+*/
+
+CREATE OR REPLACE TRIGGER CAPTURAR_ERRORES
+AFTER SERVERERROR
+ON DATABASE
+DECLARE
+    SQL_TEXT ORA_NAME_LIST_T;
+    MENSAJE VARCHAR2(2000):=NULL;
+    COMANDO VARCHAR2(200):=NULL;
+BEGIN
+    FOR X IN 1..ORA_SERVER_ERROR_DEPTH LOOP
+        MENSAJE:=MENSAJE|| ORA_SERVER_ERROR_MSG(X);
+    END LOOP;
+    
+    FOR I IN 1..ORA_SQL_TXT(SQL_TEXT) LOOP
+        COMANDO:=COMANDO||SQL_TEXT(I);
+    END LOOP;
+    INSERT INTO CONTROL_ERRORES VALUES (ORA_LOGIN_USER,MENSAJE, COMANDO,SYSDATE);
+END;
+/
+
+SELECT * FROM XXXXX;
+
+SELECT * FROM CONTROL_ERRORES;
+
+
+
+
+-- Ofuscacion de código PL/SQL, es una técnica que se utiliza para proteger u ocultar el código PL/SQL,
+-- esto se puede hacer utilizando la opción OBFUSCATED al compilar el código PL /SQL, esto permite que el código PL/SQL
+-- se almacene en la base de datos de manera ofuscada, es decir, de manera que no se pueda leer ni entender fácilmente, 
+-- esto puede ser útil para proteger el código PL/SQL, y evitar que se pueda copiar o modificar sin autorización.
+
+
+-- Utilidad wrap, se utiliza para ofuscar el código PL/SQL, esto se puede hacer utilizando la utilidad WRAP 
+-- que se encuentra en el directorio BIN de la instalación de Oracle, esta utilidad permite ofuscar el código PL/SQL,
+--  y generar un archivo con el código ofuscado, este archivo se puede utilizar para crear procedimientos, funciones, 
+-- paquetes, etc, con el código ofuscado, esto puede ser útil para proteger el código PL/SQL, y evitar que se pueda copiar o modificar sin autorización.
+
+-- DBMS_DDL, es un paquete que permite ejecutar sentencias DDL de manera dinámica, esto puede ser útil para crear procedimientos,
+--  funciones, paquetes, etc, de manera dinámica, utilizando el paquete DBMS_DDL para ejecutar las sentencias DDL necesarias para crear esos objetos de manera dinámica.
+
+-- No hay forma de revertir ofuscacion, es decir, una vez que el código PL/SQL se ha ofuscado, no se puede revertir a su forma original, 
+-- por lo que es importante tener una copia del código original antes de ofuscarlo, para poder modificarlo o actualizarlo en el futuro si es necesario.
+
+
+
+--
+CREATE OR REPLACE PROCEDURE PROC1
+IS
+    NUM_EMPLE NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO NUM_EMPLE FROM EMPLOYEES;
+    DBMS_OUTPUT.PUT_LINE(NUM_EMPLE);
+END;
+/
+/*
+# 🔐 Ofuscación de código en PL/SQL
+
+La **ofuscación** consiste en ocultar el código fuente para dificultar que otras personas lo lean, copien o modifiquen.
+
+En Oracle, esto se hace principalmente con:
+
+* Utilidad `WRAP`
+* Paquete `DBMS_DDL`
+* Compilación protegida del código
+*/
+---
+
+--# 1️⃣ Procedimiento PL/SQL normal
+
+--Tu procedimiento original:
+
+```sql
+CREATE OR REPLACE PROCEDURE PROC1
+IS
+    NUM_EMPLE NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO NUM_EMPLE 
+    FROM EMPLOYEES;
+
+    DBMS_OUTPUT.PUT_LINE(NUM_EMPLE);
+END;
+/
+```
+
+--Si consultas el código:
+
+```sql
+SELECT TEXT
+FROM USER_SOURCE
+WHERE NAME = 'PROC1';
+```
+--
+--El código será completamente visible.
+
+---
+
+--# 2️⃣ Utilidad WRAP (Ofuscación de código)
+--
+--Oracle incluye la utilidad `wrap.exe` en:
+
+```text
+--ORACLE_HOME/bin
+```
+
+--Esta herramienta convierte el código PL/SQL en una versión ilegible.
+
+---
+
+--## ✅ Archivo original
+
+---Supongamos el archivo:
+
+```text
+--proc1.sql
+```
+
+--Contenido:
+
+```sql
+CREATE OR REPLACE PROCEDURE PROC1
+IS
+    NUM_EMPLE NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO NUM_EMPLE 
+    FROM EMPLOYEES;
+
+    DBMS_OUTPUT.PUT_LINE(NUM_EMPLE);
+END;
+/
+```
+
+---
+
+--## ✅ Ejecutar WRAP
+
+--Desde consola:
+
+```bash
+--wrap iname=proc1.sql oname=proc1_wrap.sql
+```
+
+---
+
+--## ✅ Resultado generado
+
+--Oracle produce algo parecido a esto:
+
+```sql
+CREATE OR REPLACE PROCEDURE PROC1 wrapped
+a000000
+1f
+abcd
+abcd
+abcd
+...
+```
+
+--El contenido ya no es entendible.
+
+---
+
+--# 3️⃣ Crear el procedimiento ofuscado
+
+--Ahora simplemente ejecutas:
+
+```sql
+@proc1_wrap.sql
+```
+
+--Y Oracle crea el procedimiento normalmente.
+
+---
+
+--# 4️⃣ Verificar la ofuscación
+
+--Si consultas:
+
+```sql
+SELECT TEXT
+FROM USER_SOURCE
+WHERE NAME = 'PROC1';
+```
+
+--Verás algo así:
+
+```text
+wrapped
+a000000
+1f
+abcd...
+```
+
+--Ya no podrás leer el código original.
+
+---
+
+--# 5️⃣ Ejemplo más profesional con funciones
+
+--## Código original
+
+```sql
+CREATE OR REPLACE FUNCTION CALCULAR_BONO
+(
+    P_SALARIO NUMBER
+)
+RETURN NUMBER
+IS
+BEGIN
+    RETURN P_SALARIO * 0.15;
+END;
+/
+```
+
+---
+
+--## Después de WRAP
+
+```sql
+CREATE OR REPLACE FUNCTION CALCULAR_BONO wrapped
+a000000
+1f
+abcd
+efgh
+...
+```
+
+---
+
+--# 6️⃣ Uso de DBMS_DDL
+
+--El paquete `DBMS_DDL` permite ejecutar DDL dinámicamente.
+
+---
+
+--## ✅ Ejemplo básico
+
+```sql
+BEGIN
+    DBMS_DDL.CREATE_WRAPPED(
+    'CREATE OR REPLACE PROCEDURE TEST_PROC IS
+     BEGIN
+         DBMS_OUTPUT.PUT_LINE(''Hola Mundo'');
+     END;');
+END;
+/
+```
+
+--Esto:
+
+--* crea el procedimiento
+--* y lo almacena ofuscado automáticamente
+
+---
+
+--# 7️⃣ Verificar el procedimiento creado
+
+```sql
+SELECT TEXT
+FROM USER_SOURCE
+WHERE NAME = 'TEST_PROC';
+```
+
+--Resultado:
+
+```text
+wrapped
+a000000
+...
+```
+
+---
+
+--# 8️⃣ Ejemplo dinámico más avanzado
+
+--## Crear paquete ofuscado
+
+```sql
+BEGIN
+    DBMS_DDL.CREATE_WRAPPED(
+    'CREATE OR REPLACE PACKAGE PKG_UTILIDADES AS
+        FUNCTION SUMAR(A NUMBER, B NUMBER)
+        RETURN NUMBER;
+     END;');
+END;
+/
+```
+
+---
+
+--# 9️⃣ Diferencia entre WRAP y DBMS_DDL
+/*
+| Método                  | Descripción                      |
+| ----------------------- | -------------------------------- |
+| WRAP                    | Utilidad externa de Oracle       |
+| DBMS_DDL.CREATE_WRAPPED | Ofusca directamente desde PL/SQL |
+| Resultado               | Ambos generan código ilegible    |
+
+---
+
+*/
+
+
+/*
+# 🔥 Importante: NO se puede revertir
+
+Una vez ofuscado:
+
+✅ Se puede ejecutar
+❌ No se puede leer fácilmente
+❌ No existe “UNWRAP” oficial de Oracle
+
+Por eso:
+
+## ✅ Buena práctica
+
+Siempre guardar:
+
+* código fuente original
+* backups
+* control de versiones (Git)
+
+---
+
+# 🔟 Ejemplo real empresarial
+
+## Escenario
+
+Una empresa vende un software de nómina y quiere proteger:
+
+* cálculos salariales
+* reglas de bonificación
+* algoritmos financieros
+
+Entonces:
+
+1. desarrollan el código PL/SQL
+2. lo ofuscan con WRAP
+3. entregan únicamente el código ofuscado
+
+Así evitan que clientes o terceros copien la lógica del negocio.
+
+---
+
+# ⚠️ Limitaciones de la ofuscación
+
+La ofuscación:
+
+✅ dificulta lectura
+✅ protege lógica de negocio
+✅ evita modificaciones simples
+
+Pero:
+
+❌ NO cifra datos
+❌ NO protege contra hackers expertos
+❌ NO reemplaza seguridad de base de datos
+
+---
+
+# ✅ Buenas prácticas de seguridad
+
+## Recomendaciones profesionales
+
+### ✔ Usar roles y privilegios
+
+```sql
+GRANT EXECUTE ON PROC1 TO APP_USER;
+```
+
+---
+
+### ✔ Evitar acceso a USER_SOURCE
+
+```sql
+REVOKE SELECT_CATALOG_ROLE FROM usuario;
+```
+
+---
+
+### ✔ Separar esquemas
+
+* esquema aplicación
+* esquema desarrollo
+* esquema administración
+
+---
+
+### ✔ Usar control de versiones
+
+Con:
+
+* Git
+* SVN
+* Azure DevOps
+
+---
+
+# 📌 Resumen final
+
+| Concepto                | Función                            |
+| ----------------------- | ---------------------------------- |
+| WRAP                    | Ofusca archivos PL/SQL             |
+| DBMS_DDL.CREATE_WRAPPED | Crea código ofuscado dinámicamente |
+| USER_SOURCE             | Muestra código almacenado          |
+| Código wrapped          | No es legible                      |
+| Unwrap                  | Oracle NO lo permite               |
+
+---
+
+# ✅ Ejemplo completo final
+
+```sql
+BEGIN
+    DBMS_DDL.CREATE_WRAPPED(
+    'CREATE OR REPLACE PROCEDURE MOSTRAR_FECHA
+     IS
+     BEGIN
+         DBMS_OUTPUT.PUT_LINE(SYSDATE);
+     END;');
+END;
+/
+```
+
+Luego:
+
+```sql
+EXEC MOSTRAR_FECHA;
+```
+
+Salida:
+
+```text
+07-MAY-26
+```
+
+Pero el código quedará protegido en la base de datos.
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
